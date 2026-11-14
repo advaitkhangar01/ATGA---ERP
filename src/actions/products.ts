@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '../lib/prisma'
+import { Prisma } from '@prisma/client'
 import { requireRole } from '../lib/auth'
 
 export interface CreateProductInput {
@@ -69,7 +70,7 @@ export async function addProduct(data: CreateProductInput) {
 
 export async function editProduct(id: string, data: UpdateProductInput) {
   await requireRole(['admin']);
-  const updateData: Record<string, any> = {};
+  const updateData: Prisma.ProductUpdateInput = {};
   if (data.sku !== undefined) updateData.sku = data.sku;
   if (data.brand !== undefined) updateData.brand = data.brand;
   if (data.carBrand !== undefined) updateData.carBrand = data.carBrand;

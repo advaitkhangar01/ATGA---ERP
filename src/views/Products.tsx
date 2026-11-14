@@ -19,6 +19,10 @@ import {
   Eye
 } from 'lucide-react';
 
+function generateRandomBarcode(): string {
+  return Math.floor(100000000000 + Math.random() * 900000000000).toString();
+}
+
 export default function Products() {
   const { products, addProduct, editProduct, archiveProduct, deactivateProduct, duplicateProduct, setView } = useStore();
   
@@ -64,7 +68,7 @@ export default function Products() {
     setFormSKU(generated);
 
     // Also auto barcode
-    const randomBar = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+    const randomBar = generateRandomBarcode();
     setFormBarcode(randomBar);
   };
 
@@ -98,7 +102,7 @@ export default function Products() {
       compatibleModels: formCompatibles.split(',').map(s => s.trim()).filter(Boolean),
       status: 'active',
       lowStockThreshold: formThreshold,
-      barcode: formBarcode || Math.floor(100000000000 + Math.random() * 900000000000).toString(),
+      barcode: formBarcode || generateRandomBarcode(),
     });
 
     setIsAddOpen(false);

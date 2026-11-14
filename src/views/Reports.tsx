@@ -6,8 +6,6 @@ import {
   Filter, 
   Download, 
   Printer, 
-  Layers, 
-  ArrowUpDown,
   BookOpen,
   Calendar
 } from 'lucide-react';
@@ -21,6 +19,7 @@ export default function Reports() {
   // Filters
   const [filterBrand, setFilterBrand] = useState('All');
   const [filterDateRange, setFilterDateRange] = useState('30'); // last 30 days
+  const [now] = useState(() => Date.now());
 
   // Exporting simulation state
   const [isExporting, setIsExporting] = useState<'pdf' | 'csv' | 'print' | null>(null);
@@ -61,7 +60,7 @@ export default function Reports() {
         list = list.filter(l => l.brand === filterBrand);
       }
       // Date filter
-      const cutoff = Date.now() - parseInt(filterDateRange) * 24 * 60 * 60 * 1000;
+      const cutoff = now - parseInt(filterDateRange) * 24 * 60 * 60 * 1000;
       list = list.filter(l => new Date(l.timestamp).getTime() >= cutoff);
       
       return list.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 15).map(item => ({

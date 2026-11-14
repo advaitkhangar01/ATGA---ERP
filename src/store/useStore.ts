@@ -79,7 +79,7 @@ interface AppState {
   
   // Modules State
   activeAudit: AuditSession | null;
-  completedAudits: any[];
+  completedAudits: Array<{ id: string; name: string; date: string; reconciledCount: number; status: string }>;
   migrationProgress: { percentage: number; step: string; fileLoaded: boolean } | null;
   unknownInventory: Array<{ id: string; sku: string; brand: string; carModel: string; glassType: string; qty: number }>;
   labelPending: string[];
@@ -118,19 +118,19 @@ interface AppState {
   cancelAudit: () => void;
   
   // Migration Actions
-  startMigration: (fileRows: any[]) => void;
+  startMigration: (fileRows: Array<Record<string, unknown>>) => void;
   assignMigrationBarcode: (tempId: string, barcode: string) => void;
   reconcileMigration: () => void;
 
   // Settings Actions
-  updateSettings: (section: keyof SystemSettings, values: any) => void;
+  updateSettings: (section: keyof SystemSettings, values: Partial<SystemSettings[keyof SystemSettings]>) => void;
 
   // Notifications Actions
   addNotification: (type: AppNotification['type'], title: string, message: string) => void;
   markNotificationRead: (id: string) => void;
   clearAllNotifications: () => void;
   logActivity: (action: string, module: string, status?: 'success' | 'failed') => void;
-  setHydratedData: (data: any) => void;
+  setHydratedData: (data: Partial<AppState>) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -281,8 +281,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Created product SKU: ${productData.sku}`, 'Products', 'success');
       get().addNotification('success', 'Product Added', `Product SKU ${productData.sku} created successfully.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -293,8 +293,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Modified product details for ID: ${id}`, 'Products', 'success');
       get().addNotification('info', 'Product Updated', `Updated product details successfully.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -305,8 +305,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Archived product ID: ${id}`, 'Products', 'success');
       get().addNotification('info', 'Product Archived', `Product was archived.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -317,8 +317,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Deactivated product ID: ${id}`, 'Products', 'success');
       get().addNotification('info', 'Product Deactivated', `Product was deactivated.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -341,8 +341,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Stocked IN +${qty} units for SKU: ${sku}`, 'Stock Operations', 'success');
       get().addNotification('success', 'Stock Received', `Added +${qty} units of SKU ${sku}.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -353,8 +353,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Stocked OUT -${qty} units for SKU: ${sku}`, 'Stock Operations', 'success');
       get().addNotification('success', 'Stock Dispatched', `Subtracted -${qty} units of SKU ${sku}.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -409,8 +409,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Marked ${qty} units of SKU ${sku} as defective`, 'Defective Inventory', 'success');
       get().addNotification('alert', 'Defect Logged', `Marked ${qty} units of ${sku} as defective.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -423,8 +423,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Scrapped defective ID: ${id}`, 'Defective Inventory', 'success');
       get().addNotification('info', 'Scrapped Defective', 'Marked defect as scrapped.');
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -437,8 +437,8 @@ export const useStore = create<AppState>((set, get) => ({
       get().setHydratedData(data);
       get().logActivity(`Restored ${qty} units from defective`, 'Defective Inventory', 'success');
       get().addNotification('success', 'Defective Restored', `Restored ${qty} units back to stock.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -547,8 +547,8 @@ export const useStore = create<AppState>((set, get) => ({
 
       get().logActivity(`Reconciled Audit Session: "${active.name}"`, 'Inventory Audit', 'success');
       get().addNotification('success', 'Audit Complete', `Reconciled discrepancies and closed audit.`);
-    } catch (e: any) {
-      get().addNotification('error', 'Database Error', e.message || String(e));
+    } catch (e: unknown) {
+      get().addNotification('error', 'Database Error', e instanceof Error ? e.message : String(e));
     }
   },
 
@@ -580,7 +580,7 @@ export const useStore = create<AppState>((set, get) => ({
       
       // Look up if product exists in db, otherwise assign barcode to it
       const productIndex = state.products.findIndex((p) => p.sku === item.sku);
-      let updatedProducts = [...state.products];
+      const updatedProducts = [...state.products];
       if (productIndex !== -1) {
         updatedProducts[productIndex] = { ...updatedProducts[productIndex], barcode };
       }
@@ -629,7 +629,7 @@ export const useStore = create<AppState>((set, get) => ({
     get().addNotification('info', 'Settings Updated', `System ${section} configurations updated.`);
   },
 
-  setHydratedData: (data: any) => {
+  setHydratedData: (data: Partial<AppState>) => {
     set(data);
   },
 }));

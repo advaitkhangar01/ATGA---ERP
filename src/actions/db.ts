@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '../lib/prisma'
-import { generateMockData } from '../utils/mockData'
+import { generateMockData, LedgerEntry } from '../utils/mockData'
 
 export async function hydrateStore() {
   let dbProducts = await prisma.product.findMany({
@@ -112,7 +112,7 @@ export async function hydrateStore() {
     productId: l.productId,
     sku: dbProducts.find(p => p.id === l.productId)?.sku || '',
     brand: l.brand,
-    type: l.type as any,
+    type: (l.type || 'in') as LedgerEntry['type'],
     qty: l.quantity,
     user: l.user,
     shop: l.shop,

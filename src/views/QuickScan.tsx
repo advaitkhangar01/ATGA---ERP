@@ -14,6 +14,11 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+function getRandomProduct<T>(items: T[]): T | undefined {
+  if (items.length === 0) return undefined;
+  return items[Math.floor(Math.random() * items.length)];
+}
+
 export default function QuickScan() {
   const { products, inventory, stockIn, stockOut, markDefective } = useStore();
 
@@ -45,7 +50,7 @@ export default function QuickScan() {
 
   // Simulate a hardware scanner scan button click (picks a random product)
   const handleSimulateHardwareScan = () => {
-    const randomProd = products[Math.floor(Math.random() * products.length)];
+    const randomProd = getRandomProduct(products);
     if (randomProd) {
       setActiveProduct(randomProd);
       triggerBeepAnimation();

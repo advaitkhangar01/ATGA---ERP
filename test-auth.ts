@@ -1,4 +1,4 @@
-import { loginAction, verifySession } from './src/actions/auth';
+import { loginAction } from './src/actions/auth';
 import { prisma } from './src/lib/prisma';
 
 async function testAuth() {

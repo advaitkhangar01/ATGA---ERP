@@ -31,9 +31,9 @@ export async function withTransactionRetry<T>(
   while (true) {
     try {
       return await action()
-    } catch (err: any) {
+    } catch (err: unknown) {
       attempt++
-      const msg = err?.message || String(err)
+      const msg = err instanceof Error ? err.message : String(err)
       const isLockContention =
         msg.includes('Transaction already closed') ||
         msg.includes('database is locked') ||

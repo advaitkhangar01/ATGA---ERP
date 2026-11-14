@@ -4,10 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Dialog } from '../components/ui/dialog';
 import { 
   Users as UsersIcon, 
-  Plus, 
   Shield, 
   UserPlus, 
-  Trash2, 
   RefreshCw,
   ToggleLeft,
   ToggleRight
@@ -241,7 +239,7 @@ export default function Users() {
             <label className="block text-[10px] text-zinc-400 font-bold uppercase mb-1">Assigned Role</label>
             <select
               value={newRole}
-              onChange={(e) => setNewRole(e.target.value as any)}
+              onChange={(e) => setNewRole(e.target.value as 'admin' | 'staff')}
               className="w-full bg-zinc-50 dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-750 p-2.5 rounded-lg focus:outline-none font-bold"
             >
               <option value="staff">Staff Operator (Read/Write Stocks)</option>

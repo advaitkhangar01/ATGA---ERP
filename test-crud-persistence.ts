@@ -1,5 +1,4 @@
 import { addProduct, archiveProduct } from './src/actions/products';
-import { scrapDefective, restoreDefective } from './src/actions/defective';
 import { hydrateStore } from './src/actions/db';
 import { prisma } from './src/lib/prisma';
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 // 1. Donut Chart Component
@@ -12,25 +12,36 @@ export function DonutChart({ data }: { data: DonutData[] }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const total = data.reduce((acc, curr) => acc + curr.value, 0);
 
-  let accumulatedAngle = 0;
   const radius = 60;
   const strokeWidth = 24;
   const size = 180;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
 
+  const computedSlices = useMemo(() => {
+    let accumulated = 0;
+    return data.map((item) => {
+      const percentage = total > 0 ? item.value / total : 0;
+      const strokeDashoffset = circumference - percentage * circumference;
+      const strokeDasharray = `${circumference} ${circumference}`;
+      const rotation = total > 0 ? (accumulated / total) * 360 : 0;
+      accumulated += item.value;
+
+      return {
+        ...item,
+        strokeDashoffset,
+        strokeDasharray,
+        rotation,
+      };
+    });
+  }, [data, total, circumference]);
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-around gap-4 py-4 w-full">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
           <circle cx={center} cy={center} r={radius} fill="transparent" stroke="#27272a" strokeWidth={strokeWidth} className="opacity-10 dark:opacity-20" />
-          {data.map((item, idx) => {
-            const percentage = item.value / total;
-            const strokeDashoffset = circumference - percentage * circumference;
-            const strokeDasharray = `${circumference} ${circumference}`;
-            const rotation = (accumulatedAngle / total) * 360;
-            accumulatedAngle += item.value;
-
+          {computedSlices.map((item, idx) => {
             const isHovered = hoveredIdx === idx;
 
             return (
@@ -42,11 +53,11 @@ export function DonutChart({ data }: { data: DonutData[] }) {
                 fill="transparent"
                 stroke={item.color}
                 strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
-                strokeDasharray={strokeDasharray}
+                strokeDasharray={item.strokeDasharray}
                 initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset }}
+                animate={{ strokeDashoffset: item.strokeDashoffset }}
                 transition={{ duration: 1, ease: 'easeOut', delay: idx * 0.05 }}
-                transform={`rotate(${rotation} ${center} ${center})`}
+                transform={`rotate(${item.rotation} ${center} ${center})`}
                 style={{ originX: `${center}px`, originY: `${center}px`, cursor: 'pointer' }}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
