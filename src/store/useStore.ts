@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { generateMockData, Product, InventoryRecord, LedgerEntry, DefectiveRecord, ActivityLog } from '../utils/mockData';
 import { stockIn as serverStockIn, stockOut as serverStockOut, markDefective as serverMarkDefective } from '../actions/inventory';
+import { 
+  addProduct as serverAddProduct, 
+  editProduct as serverEditProduct, 
+  archiveProduct as serverArchiveProduct, 
+  deactivateProduct as serverDeactivateProduct 
+} from '../actions/products';
+import { scrapDefective as serverScrapDefective, restoreDefective as serverRestoreDefective } from '../actions/defective';
+import { reconcileAudit as serverReconcileAudit } from '../actions/audit';
 import { hydrateStore } from '../actions/db';
 export type { Product, InventoryRecord, LedgerEntry, DefectiveRecord, ActivityLog };
 
@@ -257,79 +265,59 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Product CRUD
-  addProduct: (productData) => {
-    const id = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    const newProduct: Product = {
-      ...productData,
-      id,
-      createdDate: new Date().toISOString().split('T')[0],
-    };
-    
-    // Add to Inventory listing with 0 initial quantities
-    const newInventory: InventoryRecord = {
-      productId: id,
-      sku: newProduct.sku,
-      brand: newProduct.brand,
-      carModel: `${newProduct.carBrand} ${newProduct.carModel}`,
-      glassType: newProduct.glassType,
-      goodQty: 0,
-      defectiveQty: 0,
-      availableQty: 0,
-      status: 'Out Of Stock',
-      location: 'Unassigned Shelf',
-      lastUpdated: new Date().toISOString(),
-    };
-
-    set((state) => ({
-      products: [newProduct, ...state.products],
-      inventory: [newInventory, ...state.inventory],
-    }));
-
-    get().logActivity(`Created product SKU: ${newProduct.sku}`, 'Products', 'success');
-    get().addNotification('success', 'Product Added', `Product SKU ${newProduct.sku} created successfully.`);
+  addProduct: async (productData) => {
+    try {
+      await serverAddProduct(productData);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Created product SKU: ${productData.sku}`, 'Products', 'success');
+      get().addNotification('success', 'Product Added', `Product SKU ${productData.sku} created successfully.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
-  editProduct: (id, updated) => {
-    set((state) => {
-      const updatedProducts = state.products.map((p) => (p.id === id ? { ...p, ...updated } : p));
-      // update SKUs in inventory if updated
-      const updatedInventory = state.inventory.map((inv) => {
-        if (inv.productId === id) {
-          const prod = updatedProducts.find((p) => p.id === id)!;
-          return {
-            ...inv,
-            sku: prod.sku,
-            brand: prod.brand,
-            carModel: `${prod.carBrand} ${prod.carModel}`,
-            glassType: prod.glassType,
-          };
-        }
-        return inv;
-      });
-      return { products: updatedProducts, inventory: updatedInventory };
-    });
-    get().logActivity(`Modified product details for ID: ${id}`, 'Products', 'success');
+  editProduct: async (id, updated) => {
+    try {
+      await serverEditProduct(id, updated);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Modified product details for ID: ${id}`, 'Products', 'success');
+      get().addNotification('info', 'Product Updated', `Updated product details successfully.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
-  archiveProduct: (id) => {
-    set((state) => ({
-      products: state.products.map((p) => (p.id === id ? { ...p, status: 'archived' as const } : p)),
-    }));
-    get().logActivity(`Archived product ID: ${id}`, 'Products', 'success');
+  archiveProduct: async (id) => {
+    try {
+      await serverArchiveProduct(id);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Archived product ID: ${id}`, 'Products', 'success');
+      get().addNotification('info', 'Product Archived', `Product was archived.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
-  deactivateProduct: (id) => {
-    set((state) => ({
-      products: state.products.map((p) => (p.id === id ? { ...p, status: 'deactivated' as const } : p)),
-    }));
-    get().logActivity(`Deactivated product ID: ${id}`, 'Products', 'success');
+  deactivateProduct: async (id) => {
+    try {
+      await serverDeactivateProduct(id);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Deactivated product ID: ${id}`, 'Products', 'success');
+      get().addNotification('info', 'Product Deactivated', `Product was deactivated.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
-  duplicateProduct: (id) => {
+  duplicateProduct: async (id) => {
     const existing = get().products.find((p) => p.id === id);
     if (!existing) return;
     const { id: _, createdDate: __, sku, barcode, ...rest } = existing;
-    get().addProduct({
+    await get().addProduct({
       ...rest,
       sku: `${sku}-COPY`,
       barcode: `${barcode}1`,
@@ -417,107 +405,32 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  scrapDefective: (id) => {
-    const defRecord = get().defective.find((d) => d.id === id);
-    if (!defRecord) return;
-
-    const newLedger: LedgerEntry = {
-      id: `led_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      productId: defRecord.productId,
-      sku: defRecord.sku,
-      brand: defRecord.brand,
-      type: 'defective_scrap',
-      qty: defRecord.qty,
-      user: get().user?.email || 'admin@atulglass.com',
-      shop: defRecord.shop,
-      timestamp: new Date().toISOString(),
-      remarks: `Scrapped defective unit: ${defRecord.reason}`,
-    };
-
-    set((state) => {
-      const updatedInventory = state.inventory.map((inv) => {
-        if (inv.productId === defRecord.productId) {
-          return {
-            ...inv,
-            defectiveQty: Math.max(0, inv.defectiveQty - defRecord.qty),
-            lastUpdated: new Date().toISOString(),
-          };
-        }
-        return inv;
-      });
-
-      const updatedDefective = state.defective.map((def) =>
-        def.id === id ? { ...def, status: 'scrapped' as const } : def
-      );
-
-      return {
-        inventory: updatedInventory,
-        defective: updatedDefective,
-        ledger: [newLedger, ...state.ledger],
-      };
-    });
-
-    get().logActivity(`Scrapped ${defRecord.qty} defective units of SKU ${defRecord.sku}`, 'Defective Inventory', 'success');
+  scrapDefective: async (id) => {
+    try {
+      const user = get().user?.email || 'admin@atulglass.com';
+      const shop = get().settings.shop.currentShop;
+      await serverScrapDefective(id, user, shop);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Scrapped defective ID: ${id}`, 'Defective Inventory', 'success');
+      get().addNotification('info', 'Scrapped Defective', 'Marked defect as scrapped.');
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
-  restoreDefective: (id, qty) => {
-    const defRecord = get().defective.find((d) => d.id === id);
-    if (!defRecord || defRecord.qty < qty) return;
-
-    const newLedger: LedgerEntry = {
-      id: `led_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      productId: defRecord.productId,
-      sku: defRecord.sku,
-      brand: defRecord.brand,
-      type: 'defective_restore',
-      qty,
-      user: get().user?.email || 'staff@atulglass.com',
-      shop: defRecord.shop,
-      timestamp: new Date().toISOString(),
-      remarks: `Restored defective unit back to inventory`,
-    };
-
-    set((state) => {
-      const updatedInventory = state.inventory.map((inv) => {
-        if (inv.productId === defRecord.productId) {
-          const newGood = inv.goodQty + qty;
-          const product = state.products.find((p) => p.id === defRecord.productId)!;
-          let newStatus: InventoryRecord['status'] = 'Normal';
-          if (newGood <= product.lowStockThreshold) newStatus = 'Low Stock';
-          
-          return {
-            ...inv,
-            goodQty: newGood,
-            defectiveQty: Math.max(0, inv.defectiveQty - qty),
-            availableQty: newGood,
-            status: newStatus,
-            lastUpdated: new Date().toISOString(),
-          };
-        }
-        return inv;
-      });
-
-      // Update defective qty or mark status
-      const updatedDefective = state.defective.map((def) => {
-        if (def.id === id) {
-          const remaining = def.qty - qty;
-          return {
-            ...def,
-            qty: remaining,
-            status: remaining === 0 ? ('restored' as const) : def.status,
-          };
-        }
-        return def;
-      });
-
-      return {
-        inventory: updatedInventory,
-        defective: updatedDefective,
-        ledger: [newLedger, ...state.ledger],
-      };
-    });
-
-    get().logActivity(`Restored ${qty} units of SKU ${defRecord.sku} from defective to good`, 'Defective Inventory', 'success');
+  restoreDefective: async (id, qty) => {
+    try {
+      const user = get().user?.email || 'staff@atulglass.com';
+      const shop = get().settings.shop.currentShop;
+      await serverRestoreDefective(id, qty, user, shop);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
+      get().logActivity(`Restored ${qty} units from defective`, 'Defective Inventory', 'success');
+      get().addNotification('success', 'Defective Restored', `Restored ${qty} units back to stock.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
   // Audit Actions
@@ -591,71 +504,43 @@ export const useStore = create<AppState>((set, get) => ({
     });
   },
 
-  reconcileAudit: () => {
+  reconcileAudit: async () => {
     const active = get().activeAudit;
     if (!active) return;
 
-    // Adjust inventory based on audit actual quantities for all accepted status updates
-    set((state) => {
-      const updatedInventory = [...state.inventory];
-      const newLedgers: LedgerEntry[] = [];
-      const shop = state.settings.shop.currentShop;
-      const user = state.user?.email || 'admin@atulglass.com';
+    try {
+      const adjustments = Object.entries(active.scanned)
+        .filter(([_, d]) => d.status === 'accepted' && d.actual !== d.expected)
+        .map(([sku, d]) => ({
+          sku,
+          actual: d.actual,
+          expected: d.expected
+        }));
 
-      Object.entries(active.scanned).forEach(([sku, details]) => {
-        if (details.status === 'accepted' && details.actual !== details.expected) {
-          const invIdx = updatedInventory.findIndex((inv) => inv.sku === sku);
-          if (invIdx !== -1) {
-            const diff = details.actual - details.expected;
-            const originalInv = updatedInventory[invIdx];
-            const product = state.products.find((p) => p.id === originalInv.productId)!;
-
-            let newStatus: InventoryRecord['status'] = 'Normal';
-            if (details.actual === 0) newStatus = 'Out Of Stock';
-            else if (details.actual <= product.lowStockThreshold) newStatus = 'Low Stock';
-
-            updatedInventory[invIdx] = {
-              ...originalInv,
-              goodQty: details.actual,
-              availableQty: details.actual,
-              status: newStatus,
-              lastUpdated: new Date().toISOString(),
-            };
-
-            newLedgers.push({
-              id: `led_aud_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-              productId: originalInv.productId,
-              sku,
-              brand: originalInv.brand,
-              type: 'audit_adjust',
-              qty: Math.abs(diff),
-              user,
-              shop,
-              timestamp: new Date().toISOString(),
-              remarks: `Audit Reconciliation Adjustment: ${diff > 0 ? '+' : ''}${diff} units`,
-            });
-          }
-        }
-      });
+      const user = get().user?.email || 'admin@atulglass.com';
+      const shop = get().settings.shop.currentShop;
+      await serverReconcileAudit(active.id, adjustments, user, shop);
+      const data = await hydrateStore();
+      get().setHydratedData(data);
 
       const completed = {
         id: active.id,
         name: active.name,
         date: active.date,
-        reconciledCount: newLedgers.length,
+        reconciledCount: adjustments.length,
         status: 'completed',
       };
 
-      return {
-        inventory: updatedInventory,
-        ledger: [...newLedgers, ...state.ledger],
+      set((state) => ({
         completedAudits: [completed, ...state.completedAudits],
         activeAudit: null,
-      };
-    });
+      }));
 
-    get().logActivity(`Reconciled Audit Session: "${active.name}"`, 'Inventory Audit', 'success');
-    get().addNotification('success', 'Audit Complete', `Reconciled discrepancies and closed audit.`);
+      get().logActivity(`Reconciled Audit Session: "${active.name}"`, 'Inventory Audit', 'success');
+      get().addNotification('success', 'Audit Complete', `Reconciled discrepancies and closed audit.`);
+    } catch (e: any) {
+      get().addNotification('error', 'Database Error', e.message || String(e));
+    }
   },
 
   cancelAudit: () => {

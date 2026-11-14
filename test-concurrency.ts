@@ -8,9 +8,10 @@ async function runTest() {
   const product = await addProduct({
     sku: 'TEST-RACE-001',
     brand: 'Maruti',
+    carBrand: 'Maruti',
     carModel: 'Swift',
     glassType: 'Front',
-    threshold: 5
+    lowStockThreshold: 5
   });
   console.log('Created product: TEST-RACE-001');
 
