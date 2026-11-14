@@ -15,47 +15,60 @@ model User {
 }
 
 model Product {
-  id         String @id @default(cuid())
-  sku        String @unique
-  brand      String
-  carModel   String
-  glassType  String
-  threshold  Int    @default(5)
-  inventory  Inventory?
-  ledgers    Ledger[]
+  id               String     @id @default(cuid())
+  sku              String     @unique
+  brand            String
+  carBrand         String     @default("Maruti")
+  carModel         String
+  glassType        String
+  description      String     @default("")
+  compatibleModels String     @default("[]")
+  status           String     @default("active") // 'active' | 'deactivated' | 'archived'
+  threshold        Int        @default(5)
+  barcode          String?
+  createdDate      DateTime   @default(now())
+  inventory        Inventory?
+  ledgers          Ledger[]
 }
 
 model Inventory {
-  id         String  @id @default(cuid())
-  productId  String  @unique
-  product    Product @relation(fields: [productId], references: [id])
-  quantity   Int     @default(0)
-  location   String  @default("Main Warehouse")
+  id           String   @id @default(cuid())
+  productId    String   @unique
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  goodQty      Int      @default(0)
+  defectiveQty Int      @default(0)
+  availableQty Int      @default(0)
+  location     String   @default("Main Warehouse")
+  lastUpdated  DateTime @default(now())
 }
 
 model Ledger {
-  id          String   @id @default(cuid())
-  actionType  String   // 'IN' | 'OUT' | 'DEFECTIVE'
-  quantity    Int
-  timestamp   DateTime @default(now())
-  remarks     String?
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  userId      String?
+  id         String   @id @default(cuid())
+  type       String   @default("in") // 'in' | 'out' | 'defective_mark' | 'defective_scrap' | 'defective_restore' | 'audit_adjust'
+  actionType String   @default("IN") // 'IN' | 'OUT' | 'DEFECTIVE'
+  quantity   Int
+  brand      String   @default("")
+  shop       String   @default("Main Warehouse")
+  user       String   @default("system")
+  timestamp  DateTime @default(now())
+  remarks    String?
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId     String?
 }
 
 model Defective {
-  id         String   @id @default(cuid())
-  sku        String
-  quantity   Int
-  reason     String
-  timestamp  DateTime @default(now())
-  status     String   @default("pending") // 'pending', 'scrapped', 'restored'
+  id        String   @id @default(cuid())
+  sku       String
+  quantity  Int
+  reason    String
+  timestamp DateTime @default(now())
+  status    String   @default("pending") // 'pending', 'scrapped', 'restored'
 }
 
 model AuditSession {
-  id          String   @id @default(cuid())
-  name        String
-  date        DateTime @default(now())
-  status      String   @default("in-progress") // 'in-progress', 'completed'
+  id     String   @id @default(cuid())
+  name   String
+  date   DateTime @default(now())
+  status String   @default("in-progress") // 'in-progress', 'completed'
 }

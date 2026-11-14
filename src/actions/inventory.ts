@@ -9,14 +9,27 @@ export async function stockIn(sku: string, qty: number, vendor: string, remarks:
 
     const inventory = await tx.inventory.upsert({
       where: { productId: product.id },
-      create: { productId: product.id, quantity: qty },
-      update: { quantity: { increment: qty } }
+      create: { 
+        productId: product.id, 
+        goodQty: qty, 
+        availableQty: qty, 
+        defectiveQty: 0,
+        location: 'Main Warehouse' 
+      },
+      update: { 
+        goodQty: { increment: qty },
+        availableQty: { increment: qty }
+      }
     })
 
     const ledger = await tx.ledger.create({
       data: {
+        type: 'in',
         actionType: 'IN',
         quantity: qty,
+        brand: product.brand,
+        shop: 'Main Warehouse',
+        user: vendor || 'Vendor Delivery',
         remarks: remarks || `Vendor: ${vendor}`,
         productId: product.id,
       }
@@ -32,19 +45,26 @@ export async function stockOut(sku: string, qty: number, customer: string, reaso
     if (!product) throw new Error(`Product with SKU ${sku} not found.`)
     
     const inventory = await tx.inventory.findUnique({ where: { productId: product.id } })
-    if (!inventory || inventory.quantity < qty) {
+    if (!inventory || inventory.goodQty < qty) {
       throw new Error(`Insufficient stock for SKU ${sku}.`)
     }
 
     const newInventory = await tx.inventory.update({
       where: { productId: product.id },
-      data: { quantity: { decrement: qty } }
+      data: { 
+        goodQty: { decrement: qty },
+        availableQty: { decrement: qty }
+      }
     })
 
     const ledger = await tx.ledger.create({
       data: {
+        type: 'out',
         actionType: 'OUT',
         quantity: qty,
+        brand: product.brand,
+        shop: 'Main Warehouse',
+        user: customer || 'Customer Dispatch',
         remarks: `${reason}: ${customer}. ${remarks}`,
         productId: product.id,
       }
@@ -60,13 +80,17 @@ export async function markDefective(sku: string, qty: number, reason: string) {
     if (!product) throw new Error(`Product with SKU ${sku} not found.`)
     
     const inventory = await tx.inventory.findUnique({ where: { productId: product.id } })
-    if (!inventory || inventory.quantity < qty) {
+    if (!inventory || inventory.goodQty < qty) {
       throw new Error(`Insufficient stock for SKU ${sku} to mark defective.`)
     }
 
     const newInventory = await tx.inventory.update({
       where: { productId: product.id },
-      data: { quantity: { decrement: qty } }
+      data: { 
+        goodQty: { decrement: qty },
+        availableQty: { decrement: qty },
+        defectiveQty: { increment: qty }
+      }
     })
     
     const defective = await tx.defective.create({
@@ -80,8 +104,12 @@ export async function markDefective(sku: string, qty: number, reason: string) {
     
     const ledger = await tx.ledger.create({
       data: {
+        type: 'defective_mark',
         actionType: 'DEFECTIVE',
         quantity: qty,
+        brand: product.brand,
+        shop: 'Main Warehouse',
+        user: 'staff@atulglass.com',
         remarks: reason,
         productId: product.id,
       }

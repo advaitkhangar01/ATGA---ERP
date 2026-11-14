@@ -33,9 +33,9 @@ async function runTest() {
   
   // 4. Verify DB state
   const inv = await prisma.inventory.findUnique({ where: { productId: product.id }});
-  console.log('Final Inventory Qty (Should be exactly 0):', inv?.quantity);
+  console.log('Final Inventory Qty (Should be exactly 0):', inv?.goodQty);
   
-  if (inv?.quantity === 0) {
+  if (inv?.goodQty === 0) {
     console.log('✅ TEST PASSED: No negative inventory! Race conditions are prevented by Prisma transactions.');
   } else {
     console.log('❌ TEST FAILED: Negative inventory occurred!');

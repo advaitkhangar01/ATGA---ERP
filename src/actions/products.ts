@@ -13,7 +13,7 @@ export async function addProduct(data: { sku: string; brand: string; carModel: s
     data: {
       ...data,
       inventory: {
-        create: { quantity: 0 }
+        create: { goodQty: 0, defectiveQty: 0, availableQty: 0 }
       }
     },
     include: { inventory: true }
