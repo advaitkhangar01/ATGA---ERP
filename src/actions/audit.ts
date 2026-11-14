@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '../lib/prisma'
+import { requireRole } from '../lib/auth'
 
 export interface AuditAdjustment {
   sku: string;
@@ -36,6 +37,7 @@ export async function reconcileAudit(
   user = 'admin@atulglass.com',
   shop = 'Main Warehouse'
 ) {
+  await requireRole(['admin']);
   return await prisma.$transaction(async (tx) => {
     for (const adj of adjustments) {
       if (adj.actual === adj.expected) continue;

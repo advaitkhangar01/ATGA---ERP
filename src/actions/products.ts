@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '../lib/prisma'
+import { requireRole } from '../lib/auth'
 
 export interface CreateProductInput {
   sku: string;
@@ -36,6 +37,7 @@ export async function getProducts() {
 }
 
 export async function addProduct(data: CreateProductInput) {
+  await requireRole(['admin']);
   return await prisma.$transaction(async (tx) => {
     const product = await tx.product.create({
       data: {
@@ -66,6 +68,7 @@ export async function addProduct(data: CreateProductInput) {
 }
 
 export async function editProduct(id: string, data: UpdateProductInput) {
+  await requireRole(['admin']);
   const updateData: Record<string, any> = {};
   if (data.sku !== undefined) updateData.sku = data.sku;
   if (data.brand !== undefined) updateData.brand = data.brand;
@@ -86,6 +89,7 @@ export async function editProduct(id: string, data: UpdateProductInput) {
 }
 
 export async function archiveProduct(id: string) {
+  await requireRole(['admin']);
   return await prisma.product.update({
     where: { id },
     data: { status: 'archived' }
@@ -93,6 +97,7 @@ export async function archiveProduct(id: string) {
 }
 
 export async function deactivateProduct(id: string) {
+  await requireRole(['admin']);
   return await prisma.product.update({
     where: { id },
     data: { status: 'deactivated' }

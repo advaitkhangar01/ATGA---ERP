@@ -1,8 +1,10 @@
 'use server'
 
 import { prisma, withTransactionRetry } from '../lib/prisma'
+import { requireRole } from '../lib/auth'
 
 export async function stockIn(sku: string, qty: number, vendor: string, remarks: string) {
+  await requireRole(['admin', 'staff']);
   return withTransactionRetry(async () => {
     return await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({ where: { sku } })
@@ -42,6 +44,7 @@ export async function stockIn(sku: string, qty: number, vendor: string, remarks:
 }
 
 export async function stockOut(sku: string, qty: number, customer: string, reason: string, remarks: string) {
+  await requireRole(['admin', 'staff']);
   return withTransactionRetry(async () => {
     return await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({ where: { sku } })
@@ -79,6 +82,7 @@ export async function stockOut(sku: string, qty: number, customer: string, reaso
 }
 
 export async function markDefective(sku: string, qty: number, reason: string) {
+  await requireRole(['admin', 'staff']);
   return withTransactionRetry(async () => {
     return await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({ where: { sku } })

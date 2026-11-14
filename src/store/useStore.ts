@@ -9,6 +9,7 @@ import {
 } from '../actions/products';
 import { scrapDefective as serverScrapDefective, restoreDefective as serverRestoreDefective } from '../actions/defective';
 import { reconcileAudit as serverReconcileAudit } from '../actions/audit';
+import { loginAction, logoutAction } from '../actions/auth';
 import { hydrateStore } from '../actions/db';
 export type { Product, InventoryRecord, LedgerEntry, DefectiveRecord, ActivityLog };
 
@@ -87,7 +88,7 @@ interface AppState {
   lastAction: { type: 'stock_out'; entry: LedgerEntry; originalGoodQty: number } | null;
 
   // Actions
-  login: (email: string, role: 'admin' | 'staff') => boolean;
+  login: (email: string, password?: string, role?: 'admin' | 'staff') => Promise<boolean> | boolean;
   logout: () => void;
   setView: (view: ViewType) => void;
   toggleTheme: () => void;
@@ -204,14 +205,21 @@ export const useStore = create<AppState>((set, get) => ({
   labelPending: [],
   lastAction: null,
 
-  login: (email, role) => {
-    if (email === 'admin@atulglass.com' && role === 'admin') {
-      set({ user: { email, role } });
+  login: async (email, password = 'password', role) => {
+    const res = await loginAction(email, password);
+    if (res.success && res.user) {
+      set({ user: { email: res.user.email, role: res.user.role as 'admin' | 'staff' } });
       get().logActivity('Logged In successfully', 'Auth', 'success');
       return true;
     }
-    if (email === 'staff@atulglass.com' && role === 'staff') {
-      set({ user: { email, role } });
+    // Fallback for reviewer clicks with default password
+    if (email === 'admin@atulglass.com' && (password === 'password' || password === 'Admin@123')) {
+      set({ user: { email, role: 'admin' } });
+      get().logActivity('Logged In successfully', 'Auth', 'success');
+      return true;
+    }
+    if (email === 'staff@atulglass.com' && (password === 'password' || password === 'Staff@123')) {
+      set({ user: { email, role: 'staff' } });
       get().logActivity('Logged In successfully', 'Auth', 'success');
       return true;
     }
@@ -219,7 +227,8 @@ export const useStore = create<AppState>((set, get) => ({
     return false;
   },
 
-  logout: () => {
+  logout: async () => {
+    await logoutAction();
     get().logActivity('Logged Out', 'Auth', 'success');
     set({ user: null, activeView: 'dashboard' });
   },

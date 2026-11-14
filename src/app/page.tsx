@@ -97,7 +97,7 @@ export default function MainPage() {
   // Auth Screen Local States
   const [authMode, setAuthMode] = useState<'login' | 'forgot' | 'reset'>('login');
   const [emailInput, setEmailInput] = useState('admin@atulglass.com');
-  const [passwordInput, setPasswordInput] = useState('password');
+  const [passwordInput, setPasswordInput] = useState('Admin@123');
   const [roleInput, setRoleInput] = useState<'admin' | 'staff'>('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -113,12 +113,14 @@ export default function MainPage() {
   const [globalQuery, setGlobalQuery] = useState('');
   const [isGlobalSearchFocused, setIsGlobalSearchFocused] = useState(false);
 
-  // Sync email when role changes in login form to ease reviewer logins
+  // Sync email and password when role changes in login form to ease reviewer logins
   useEffect(() => {
     if (roleInput === 'admin') {
       setEmailInput('admin@atulglass.com');
+      setPasswordInput('Admin@123');
     } else {
       setEmailInput('staff@atulglass.com');
+      setPasswordInput('Staff@123');
     }
   }, [roleInput]);
 
@@ -133,10 +135,10 @@ export default function MainPage() {
   }, [theme]);
 
   // Login handler
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    const success = login(emailInput, roleInput);
+    const success = await login(emailInput, passwordInput, roleInput);
     if (!success) {
       setAuthError('Incorrect email or designated role selection.');
     }
