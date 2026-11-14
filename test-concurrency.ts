@@ -4,26 +4,26 @@ import { prisma } from './src/lib/prisma';
 
 async function runTest() {
   console.log('--- Starting Concurrency Test ---');
-  // 1. Create a dummy product
+  const sku = `TEST-RACE-${Date.now()}`;
   const product = await addProduct({
-    sku: 'TEST-RACE-001',
+    sku,
     brand: 'Maruti',
     carBrand: 'Maruti',
     carModel: 'Swift',
     glassType: 'Front',
     lowStockThreshold: 5
   });
-  console.log('Created product: TEST-RACE-001');
+  console.log('Created product:', sku);
 
   // 2. Add exactly 1 unit of stock
-  await stockIn('TEST-RACE-001', 1, 'Vendor A', 'Initial Stock');
-  console.log('Added 1 unit of stock to TEST-RACE-001');
+  await stockIn(sku, 1, 'Vendor A', 'Initial Stock');
+  console.log('Added 1 unit of stock to', sku);
   
   // 3. Try to stockOut 1 unit TWICE simultaneously
   console.log('Attempting to scan out the last unit twice concurrently (Simulating two fast scanner clicks)...');
   const results = await Promise.allSettled([
-    stockOut('TEST-RACE-001', 1, 'Cust A', 'Test', 'Simultaneous Scan 1'),
-    stockOut('TEST-RACE-001', 1, 'Cust B', 'Test', 'Simultaneous Scan 2')
+    stockOut(sku, 1, 'Cust A', 'Test', 'Simultaneous Scan 1'),
+    stockOut(sku, 1, 'Cust B', 'Test', 'Simultaneous Scan 2')
   ]);
 
   console.log('Scan 1 Status:', results[0].status);
