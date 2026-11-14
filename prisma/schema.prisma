@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  role     String // 'admin' | 'staff'
+  password String // Hashed password
+}
+
+model Product {
+  id         String @id @default(cuid())
+  sku        String @unique
+  brand      String
+  carModel   String
+  glassType  String
+  threshold  Int    @default(5)
+  inventory  Inventory?
+  ledgers    Ledger[]
+}
+
+model Inventory {
+  id         String  @id @default(cuid())
+  productId  String  @unique
+  product    Product @relation(fields: [productId], references: [id])
+  quantity   Int     @default(0)
+  location   String  @default("Main Warehouse")
+}
+
+model Ledger {
+  id          String   @id @default(cuid())
+  actionType  String   // 'IN' | 'OUT' | 'DEFECTIVE'
+  quantity    Int
+  timestamp   DateTime @default(now())
+  remarks     String?
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  userId      String?
+}
+
+model Defective {
+  id         String   @id @default(cuid())
+  sku        String
+  quantity   Int
+  reason     String
+  timestamp  DateTime @default(now())
+  status     String   @default("pending") // 'pending', 'scrapped', 'restored'
+}
+
+model AuditSession {
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime @default(now())
+  status      String   @default("in-progress") // 'in-progress', 'completed'
+}
