@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: atulglass_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-atuladmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atulpass123}
+      POSTGRES_DB: ${POSTGRES_DB:-atulglass_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atuladmin} -d ${POSTGRES_DB:-atulglass_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atulglass_app
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-atuladmin}:${POSTGRES_PASSWORD:-atulpass123}@postgres:5432/${POSTGRES_DB:-atulglass_db}?schema=public
+      SESSION_SECRET: ${SESSION_SECRET}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+volumes:
+  postgres_data:
+
+networks:
+  internal_net:
+    driver: bridge
