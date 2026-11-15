@@ -1,30 +1,42 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // In a full production setup, this is where NextAuth or Clerk validates the token
-  const userRole = request.cookies.get('user-role')?.value || 'admin' // fallback for prototype
+  const { pathname } = request.nextUrl;
+  const sessionToken = request.cookies.get('session-token')?.value;
 
-  // Example RBAC: prevent staff from accessing sensitive administrative modules
-  if (userRole === 'staff') {
-    const restrictedPaths = ['/migration', '/settings', '/audit', '/users']
-    
-    // In our Next.js architecture, the dashboard is a single page app on '/', 
-    // but if we move these to separate routes, this middleware intercepts it.
-    // For Server Actions, we will check this role explicitly within the action.
-    const isRestricted = restrictedPaths.some(p => request.nextUrl.pathname.startsWith(p))
-    
-    if (isRestricted) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  // Public paths that do not require authentication
+  const isAuthPath = pathname.startsWith('/login');
+  const isApiPath = pathname.startsWith('/api');
+  const isStaticAsset =
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.includes('.');
+
+  if (isStaticAsset || isApiPath) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next()
+  // If user is already authenticated and visits /login, redirect to /dashboard
+  if (isAuthPath) {
+    if (sessionToken) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // If user is not authenticated and attempts to access protected routes, redirect to /login
+  if (!sessionToken && pathname !== '/') {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Apply middleware to all routes except API and static assets
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-}
+    // Apply middleware across all application paths
+    '/((?!_next/static|_next/image|favicon.ico).*)'
+  ]
+};
