@@ -233,7 +233,15 @@ export const useStore = create<AppState>((set, get) => ({
     set({ user: null, activeView: 'dashboard' });
   },
 
-  setView: (view) => set({ activeView: view }),
+  setView: (view) => {
+    set({ activeView: view });
+    if (typeof window !== 'undefined') {
+      const target = view === 'dashboard' ? '/dashboard' : `/${view}`;
+      if (window.location.pathname !== target) {
+        window.location.href = target;
+      }
+    }
+  },
 
   toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
 
