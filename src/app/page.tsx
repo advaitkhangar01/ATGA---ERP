@@ -10,7 +10,11 @@ export default function RootPage() {
 
   useEffect(() => {
     if (user) {
-      router.replace('/dashboard');
+      if (user.role === 'staff') {
+        router.replace('/quick-scan');
+      } else {
+        router.replace('/dashboard');
+      }
     } else {
       router.replace('/login');
     }

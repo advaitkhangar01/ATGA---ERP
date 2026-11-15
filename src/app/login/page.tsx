@@ -41,7 +41,8 @@ export default function LoginPage() {
     try {
       const success = await login(emailInput, passwordInput, roleInput);
       if (success) {
-        router.push('/dashboard');
+        const target = roleInput === 'staff' ? '/quick-scan' : '/dashboard';
+        router.push(target);
       } else {
         setAuthError('Invalid email or password. Please verify credentials.');
       }

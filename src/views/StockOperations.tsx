@@ -128,21 +128,27 @@ export default function StockOperations() {
       <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl max-w-sm w-full">
         <button
           onClick={() => { setActiveTab('in'); resetForm(); }}
-          className={`flex-1 py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all ${
             activeTab === 'in' ? 'bg-white dark:bg-zinc-850 shadow-sm text-zinc-950 dark:text-white' : 'text-zinc-500 hover:text-zinc-800'
           }`}
         >
-          <ArrowUpRight className="h-4.5 w-4.5 text-emerald-500" />
-          Stock Receipt (In)
+          <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+          <div className="text-left">
+            <span>Stock Receipt (In)</span>
+            <span className="block text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">माल अंदर (Truck Unload)</span>
+          </div>
         </button>
         <button
           onClick={() => { setActiveTab('out'); resetForm(); }}
-          className={`flex-1 py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all ${
             activeTab === 'out' ? 'bg-white dark:bg-zinc-850 shadow-sm text-zinc-950 dark:text-white' : 'text-zinc-500 hover:text-zinc-800'
           }`}
         >
-          <ArrowDownRight className="h-4.5 w-4.5 text-indigo-500" />
-          Stock Dispatch (Out)
+          <ArrowDownRight className="h-4 w-4 text-indigo-500" />
+          <div className="text-left">
+            <span>Stock Dispatch (Out)</span>
+            <span className="block text-[9px] text-indigo-600 dark:text-indigo-400 font-bold">माल निकला (Fitting / Counter)</span>
+          </div>
         </button>
       </div>
 
@@ -153,7 +159,9 @@ export default function StockOperations() {
             
             {/* Search autocomplete select */}
             <div className="relative">
-              <label className="block text-[10px] text-zinc-400 font-bold uppercase mb-1.5">Scan Barcode / Search Catalog SKU</label>
+              <label className="block text-[10px] text-zinc-400 font-bold uppercase mb-1.5">
+                Scan Barcode / Search Catalog SKU • बारकोड स्कैन करें या SKU खोजें
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
                 <input

@@ -68,8 +68,8 @@ export default function Defective() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-zinc-805 dark:text-zinc-100">Defective Glass panel log</h2>
-          <p className="text-zinc-500 text-xs dark:text-zinc-400 font-semibold">Track parts broken in transit or install failures. Authorize write-offs and scrap returns.</p>
+          <h2 className="text-xl font-black tracking-tight text-zinc-805 dark:text-zinc-100">Defective Glass Panel Log</h2>
+          <p className="text-zinc-500 text-xs dark:text-zinc-400 font-semibold">टूटा या स्क्रैच कांच लॉग • Track parts broken in transit or install cracks. Manage quarantine & scrap write-offs.</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export default function Defective() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Reported Damages</CardTitle>
+            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Reported Damages / कुल नुकसान</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="text-xl font-black">{totalReported} units</div>
@@ -87,7 +87,7 @@ export default function Defective() {
 
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Active Defects</CardTitle>
+            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">In Quarantine / गोदाम में टूटा माल</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="text-xl font-black text-amber-500">{activeDefects} units</div>
@@ -97,7 +97,7 @@ export default function Defective() {
 
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Scrapped/Written-off</CardTitle>
+            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Scrapped / कबाड़ घोषित</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="text-xl font-black text-rose-500">{totalScrapped} units</div>
@@ -107,7 +107,7 @@ export default function Defective() {
 
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Restored to Good</CardTitle>
+            <CardTitle className="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Restored / वापस सही किया</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="text-xl font-black text-emerald-500">{totalRestored} units</div>
