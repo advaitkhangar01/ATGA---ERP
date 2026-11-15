@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useStore, Product } from '../store/useStore';
 import { Card, CardContent } from '../components/ui/card';
 import { Dialog } from '../components/ui/dialog';
+import { useScannerWedge } from '../hooks/useScannerWedge';
 import { 
   Scan, 
   Plus, 
@@ -9,6 +10,26 @@ import {
   AlertTriangle, 
   Volume2
 } from 'lucide-react';
+
+function playScannerBeep(success = true) {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = success ? 1800 : 400;
+    gain.gain.value = 0.15;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + (success ? 0.08 : 0.2));
+  } catch {
+    // Ignore audio context errors
+  }
+}
 
 function getRandomProduct<T>(items: T[]): T | undefined {
   if (items.length === 0) return undefined;
@@ -34,15 +55,33 @@ export default function QuickScan() {
     return inventory.find(i => i.productId === activeProduct.id) || null;
   }, [activeProduct, inventory]);
 
-  // Handle Simulated scan input
-  const handleScanInput = (val: string) => {
-    const found = products.find(p => p.sku === val || p.barcode === val);
+  const triggerBeepAnimation = useCallback(() => {
+    setBeepTrigger(true);
+    playScannerBeep(true);
+    setTimeout(() => setBeepTrigger(false), 300);
+  }, []);
+
+  // Handle scan input
+  const handleScanInput = useCallback((val: string) => {
+    const query = (val || '').trim();
+    if (!query) return;
+    const found = products.find(p => p.sku.toUpperCase() === query.toUpperCase() || p.barcode === query);
     if (found) {
       setActiveProduct(found);
       triggerBeepAnimation();
+      useStore.getState().addNotification('success', 'Barcode Scanned', `Loaded ${found.sku}`);
+    } else {
+      playScannerBeep(false);
+      useStore.getState().addNotification('error', 'Barcode Not Found', `No catalog SKU matching "${query}"`);
     }
     setScanInput('');
-  };
+  }, [products, triggerBeepAnimation]);
+
+  // Keyboard wedge hardware scanner listener
+  useScannerWedge({
+    onScan: handleScanInput,
+    enabled: true,
+  });
 
   // Simulate a hardware scanner scan button click (picks a random product)
   const handleSimulateHardwareScan = () => {
@@ -51,11 +90,6 @@ export default function QuickScan() {
       setActiveProduct(randomProd);
       triggerBeepAnimation();
     }
-  };
-
-  const triggerBeepAnimation = () => {
-    setBeepTrigger(true);
-    setTimeout(() => setBeepTrigger(false), 300);
   };
 
   // Large Button handlers

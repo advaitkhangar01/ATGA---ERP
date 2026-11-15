@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { useStore, SystemSettings } from '../store/useStore';
+import { useStore } from '../store/useStore';
 import { Card, CardContent } from '../components/ui/card';
 import { 
-  Settings as SettingsIcon, 
   Store, 
   Barcode, 
   Printer, 
   Bell, 
   ShieldAlert, 
   Database,
-  Volume2,
   Save,
   RotateCcw
 } from 'lucide-react';
@@ -25,7 +23,6 @@ export default function Settings() {
   const [shopsInput, setShopsInput] = useState(settings.shop.shops.join(', '));
   const [defaultFormat, setDefaultFormat] = useState(settings.barcode.defaultFormat);
   const [strictScans, setStrictScans] = useState(settings.audit.strictScans);
-  const [dpi, setDpi] = useState(settings.printer.dpi);
   const [isSaved, setIsSaved] = useState(false);
 
   const sections = [
@@ -46,8 +43,6 @@ export default function Settings() {
       updateSettings('shop', { shops: shopsInput.split(',').map(s => s.trim()).filter(Boolean) });
     } else if (activeSection === 'barcode') {
       updateSettings('barcode', { defaultFormat });
-    } else if (activeSection === 'printers') {
-      updateSettings('printer', { dpi });
     } else if (activeSection === 'audit') {
       updateSettings('audit', { strictScans });
     }
@@ -229,29 +224,16 @@ export default function Settings() {
 
                 {activeSection === 'printers' && (
                   <>
-                    <h3 className="text-sm font-black border-b border-zinc-100 dark:border-zinc-800 pb-3 text-zinc-850 dark:text-white">Thermal Printer Outputs</h3>
+                    <h3 className="text-sm font-black border-b border-zinc-100 dark:border-zinc-800 pb-3 text-zinc-850 dark:text-white">Printer Configuration</h3>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] text-zinc-400 font-bold uppercase mb-1.5">Print Resolution Density (DPI)</label>
-                        <input
-                          type="number"
-                          value={dpi}
-                          onChange={(e) => setDpi(parseInt(e.target.value) || 203)}
-                          className="w-full bg-zinc-50 dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 p-2.5 rounded-lg text-center"
-                        />
+                    <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Printer className="h-5 w-5 text-amber-600 shrink-0" />
+                        <h4 className="font-black text-sm">Hardware Status: Printer: not configured (Using Browser Print Adapter)</h4>
                       </div>
-                      
-                      <div>
-                        <label className="block text-[10px] text-zinc-400 font-bold uppercase mb-1.5">Print Feed Speed (inch/sec)</label>
-                        <select
-                          className="w-full bg-zinc-50 dark:bg-zinc-850 border border-zinc-205 dark:border-zinc-800 p-2.5 rounded-lg focus:outline-none"
-                        >
-                          <option value="2">2 ips (Slow precision)</option>
-                          <option value="3">3 ips (Normal speed)</option>
-                          <option value="5">5 ips (High-output batch)</option>
-                        </select>
-                      </div>
+                      <p className="text-xs text-amber-800 dark:text-amber-300">
+                        Direct thermal drivers (ZPL/TSPL) are not configured for this server. Barcode labels print via the default <strong>Browser Print Adapter (CSS @page)</strong> at exact 50x25mm and 75x50mm dimensions.
+                      </p>
                     </div>
                   </>
                 )}
