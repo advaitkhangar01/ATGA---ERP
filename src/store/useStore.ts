@@ -425,8 +425,7 @@ export const useStore = create<AppState>((set, get) => ({
   scrapDefective: async (id) => {
     try {
       const user = get().user?.email || 'admin@atulglass.com';
-      const shop = get().settings.shop.currentShop;
-      await serverScrapDefective(id, user, shop);
+      await serverScrapDefective(id, user);
       const data = await hydrateStore();
       get().setHydratedData(data);
       get().logActivity(`Scrapped defective ID: ${id}`, 'Defective Inventory', 'success');
@@ -439,8 +438,7 @@ export const useStore = create<AppState>((set, get) => ({
   restoreDefective: async (id, qty) => {
     try {
       const user = get().user?.email || 'staff@atulglass.com';
-      const shop = get().settings.shop.currentShop;
-      await serverRestoreDefective(id, qty, user, shop);
+      await serverRestoreDefective(id, qty, user);
       const data = await hydrateStore();
       get().setHydratedData(data);
       get().logActivity(`Restored ${qty} units from defective`, 'Defective Inventory', 'success');
@@ -535,8 +533,7 @@ export const useStore = create<AppState>((set, get) => ({
         }));
 
       const user = get().user?.email || 'admin@atulglass.com';
-      const shop = get().settings.shop.currentShop;
-      await serverReconcileAudit(active.id, adjustments, user, shop);
+      await serverReconcileAudit(active.id, adjustments, user);
       const data = await hydrateStore();
       get().setHydratedData(data);
 

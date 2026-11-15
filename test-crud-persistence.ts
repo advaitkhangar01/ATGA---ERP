@@ -4,6 +4,7 @@ import { prisma } from './src/lib/prisma';
 
 async function testCrudPersistence() {
   const testSku = `TEST-PERSIST-${Date.now()}`;
+  const testBarcode = `BAR-${Date.now()}`;
   await addProduct({
     sku: testSku,
     brand: 'Saint Gobain',
@@ -14,7 +15,7 @@ async function testCrudPersistence() {
     compatibleModels: ['City ZX', 'City VX'],
     status: 'active',
     lowStockThreshold: 8,
-    barcode: '123456789012'
+    barcode: testBarcode
   });
 
   const hydrated = await hydrateStore();
