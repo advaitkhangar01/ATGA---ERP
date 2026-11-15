@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore, ActivityLog } from '../store/useStore';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { 
   History, 
   Search, 
@@ -11,7 +11,6 @@ import {
   X,
   FileSpreadsheet
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ActivityLogs() {
   const { activityLogs } = useStore();
@@ -192,81 +191,72 @@ export default function ActivityLogs() {
       </Card>
 
       {/* DETAIL DRAWER DIALOG */}
-      <AnimatePresence>
-        {selectedLog && (
-          <div className="fixed inset-0 z-50 overflow-hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedLog(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            />
-            <div className="absolute inset-y-0 right-0 max-w-md w-full flex">
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="w-full bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 p-6 flex flex-col justify-between shadow-2xl text-xs font-semibold"
-              >
-                <div className="space-y-6">
-                  <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                    <div>
-                      <span className="bg-zinc-100 dark:bg-zinc-850 px-2 py-0.5 rounded text-[9px] uppercase font-black tracking-wider text-zinc-500">
-                        Activity Inspection
-                      </span>
-                      <h3 className="text-sm font-black mt-2 text-zinc-900 dark:text-white">Audit Log: {selectedLog.id}</h3>
-                    </div>
-                    <button 
-                      onClick={() => setSelectedLog(null)}
-                      className="p-1 rounded-full hover:bg-zinc-150 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-650"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div 
+            onClick={() => setSelectedLog(null)}
+            className="absolute inset-0 bg-black/60"
+          />
+          <div className="absolute inset-y-0 right-0 max-w-md w-full flex">
+            <div className="w-full bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 p-6 flex flex-col justify-between shadow-2xl text-xs font-semibold">
+              <div className="space-y-6">
+                <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div>
+                    <span className="bg-zinc-100 dark:bg-zinc-850 px-2 py-0.5 rounded text-[9px] uppercase font-black tracking-wider text-zinc-500">
+                      Activity Inspection
+                    </span>
+                    <h3 className="text-sm font-black mt-2 text-zinc-900 dark:text-white">Audit Log: {selectedLog.id}</h3>
                   </div>
-
-                  <div className="space-y-4 bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-zinc-150 dark:border-zinc-850 divide-y divide-zinc-100 dark:divide-zinc-800 text-[11px]">
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">User Identity:</span>
-                      <span className="font-bold text-zinc-900 dark:text-zinc-200">{selectedLog.user}</span>
-                    </div>
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">Adjustment Action:</span>
-                      <span className="font-bold text-zinc-900 dark:text-zinc-200 text-right max-w-[200px]">{selectedLog.action}</span>
-                    </div>
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">Operation Module:</span>
-                      <span className="font-mono text-zinc-800 dark:text-zinc-300 uppercase">{selectedLog.module}</span>
-                    </div>
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">Client Host IP:</span>
-                      <span className="font-mono text-zinc-800 dark:text-zinc-350">{selectedLog.ip}</span>
-                    </div>
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">Exact Timestamp:</span>
-                      <span className="text-zinc-800 dark:text-zinc-350">{new Date(selectedLog.timestamp).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-zinc-400">Verification Result:</span>
-                      <span className={`font-black uppercase ${selectedLog.status === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {selectedLog.status}
-                      </span>
-                    </div>
-                  </div>
+                  <button 
+                    onClick={() => setSelectedLog(null)}
+                    aria-label="Close"
+                    className="p-1 rounded-full hover:bg-zinc-150 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-650"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="w-full bg-zinc-950 dark:bg-zinc-800 text-white font-bold py-2 rounded-lg hover:bg-zinc-900 dark:hover:bg-zinc-700 active:scale-95"
-                >
-                  Close Inspection
-                </button>
-              </motion.div>
+                <div className="space-y-4 bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-zinc-150 dark:border-zinc-850 divide-y divide-zinc-100 dark:divide-zinc-800 text-[11px]">
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">User Identity:</span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-200">{selectedLog.user}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">Adjustment Action:</span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-200 text-right max-w-[200px]">{selectedLog.action}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">Operation Module:</span>
+                    <span className="font-mono text-zinc-800 dark:text-zinc-300 uppercase">{selectedLog.module}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">Client Host IP:</span>
+                    <span className="font-mono text-zinc-800 dark:text-zinc-350">{selectedLog.ip}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">Exact Timestamp:</span>
+                    <span className="text-zinc-800 dark:text-zinc-350">{new Date(selectedLog.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-zinc-400">Verification Result:</span>
+                    <span className={`font-black uppercase ${selectedLog.status === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {selectedLog.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedLog(null)}
+                className="w-full bg-zinc-950 dark:bg-zinc-800 text-white font-bold py-2 rounded-lg hover:bg-zinc-900 dark:hover:bg-zinc-700 flex items-center justify-center gap-1.5"
+              >
+                <X className="h-4 w-4" />
+                Close Inspection
+              </button>
             </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

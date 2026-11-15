@@ -13,7 +13,6 @@ import {
   RotateCcw,
   Sparkles
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export default function Audit() {
   const { activeAudit, completedAudits, inventory, startAudit, scanAuditItem, decideAuditItem, reconcileAudit, cancelAudit } = useStore();

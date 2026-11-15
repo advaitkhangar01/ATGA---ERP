@@ -2,17 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useStore, Product } from '../store/useStore';
 import { Card, CardContent } from '../components/ui/card';
 import { Dialog } from '../components/ui/dialog';
-import { BarcodeGenerator } from '../components/ui/barcode-generator';
 import { 
   Scan, 
   Plus, 
   Minus, 
   AlertTriangle, 
-  Info, 
-  Sparkles,
   Volume2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 function getRandomProduct<T>(items: T[]): T | undefined {
   if (items.length === 0) return undefined;
@@ -99,14 +95,10 @@ export default function QuickScan() {
       </div>
 
       {/* Laser Beep Simulator Banner */}
-      <motion.div
-        animate={beepTrigger ? { 
-          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
-          color: '#ffffff',
-          boxShadow: '0 0 30px rgba(99, 102, 241, 0.4)'
-        } : {}}
-        transition={{ duration: 0.15 }}
-        className="glass-panel-glow p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm relative overflow-hidden"
+      <div
+        className={`p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm relative overflow-hidden transition-colors ${
+          beepTrigger ? 'bg-indigo-600 text-white shadow-indigo-500/30' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800'
+        }`}
       >
         <div className="flex items-center gap-4 relative z-10">
           <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 border ${
@@ -114,7 +106,7 @@ export default function QuickScan() {
               ? 'bg-white/20 border-white/20 text-white' 
               : 'bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/10 text-indigo-600 dark:text-indigo-400'
           }`}>
-            <Scan className="h-6 w-6 animate-pulse" />
+            <Scan className="h-6 w-6" />
           </div>
           <div>
             <h3 className={`font-extrabold text-sm ${beepTrigger ? 'text-white' : 'text-zinc-900 dark:text-white'}`}>Simulate Barcode Scanner</h3>
@@ -132,20 +124,18 @@ export default function QuickScan() {
             className={`flex-1 md:w-60 px-4 py-3 rounded-xl text-xs font-mono font-bold focus:outline-none transition-all ${
               beepTrigger 
                 ? 'bg-white/10 border-white/20 text-white placeholder-white/50' 
-                : 'glass-input text-zinc-800 dark:text-zinc-100'
+                : 'bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100'
             }`}
           />
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleSimulateHardwareScan}
-            className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-extrabold text-xs px-4.5 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-650/15 cursor-pointer shrink-0 border border-red-500/10"
+            className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-4.5 py-3 rounded-xl flex items-center gap-2 shadow-md cursor-pointer shrink-0 border border-red-500/10"
           >
             <Volume2 className="h-4.5 w-4.5" />
             Laser Scan [Beep]
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Big Product Panel */}
       {activeProduct && activeInventory && (
@@ -196,64 +186,54 @@ export default function QuickScan() {
           <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* Add stock buttons */}
-            <motion.button
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
+            <button
               onClick={() => handleAddStock(1)}
-              className="h-32 bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/35 rounded-2xl flex flex-col items-center justify-center transition-all p-4 text-center cursor-pointer shadow-xs"
+              className="h-32 bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/35 rounded-2xl flex flex-col items-center justify-center p-4 text-center cursor-pointer shadow-xs"
             >
               <Plus className="h-7 w-7 text-emerald-650 dark:text-emerald-400 mb-2" />
               <span className="font-extrabold text-base text-emerald-800 dark:text-emerald-400 leading-tight">+1 Good Stock</span>
               <span className="text-[9px] text-zinc-550 dark:text-zinc-400 mt-1 font-semibold">Vendor Intake Receipt</span>
-            </motion.button>
+            </button>
 
-            <motion.button
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
+            <button
               onClick={() => handleAddStock(5)}
-              className="h-32 bg-gradient-to-br from-emerald-600 to-teal-650 hover:from-emerald-750 hover:to-teal-750 border border-emerald-500/10 rounded-2xl flex flex-col items-center justify-center text-white transition-all shadow-md shadow-emerald-600/10 p-4 text-center cursor-pointer"
+              className="h-32 bg-emerald-600 hover:bg-emerald-700 border border-emerald-500/10 rounded-2xl flex flex-col items-center justify-center text-white shadow-md shadow-emerald-600/10 p-4 text-center cursor-pointer"
             >
               <Plus className="h-7 w-7 mb-2" />
               <span className="font-extrabold text-base leading-tight">+5 Good Stock</span>
               <span className="text-[9px] text-emerald-100/80 mt-1 font-semibold">Bulk Receipt Intake</span>
-            </motion.button>
+            </button>
 
             {/* Deduct stock buttons */}
-            <motion.button
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
+            <button
               onClick={() => handleRemoveStock(1)}
-              className="h-32 bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/35 rounded-2xl flex flex-col items-center justify-center transition-all p-4 text-center cursor-pointer shadow-xs"
+              className="h-32 bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/35 rounded-2xl flex flex-col items-center justify-center p-4 text-center cursor-pointer shadow-xs"
             >
               <Minus className="h-7 w-7 text-indigo-600 dark:text-indigo-400 mb-2" />
               <span className="font-extrabold text-base text-indigo-800 dark:text-indigo-400 leading-tight">-1 Good Stock</span>
               <span className="text-[9px] text-zinc-550 dark:text-zinc-400 mt-1 font-semibold">Installation Dispatch</span>
-            </motion.button>
+            </button>
 
-            <motion.button
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
+            <button
               onClick={() => handleRemoveStock(5)}
-              className="h-32 bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border border-indigo-500/10 rounded-2xl flex flex-col items-center justify-center text-white transition-all shadow-md shadow-indigo-600/10 p-4 text-center cursor-pointer"
+              className="h-32 bg-indigo-600 hover:bg-indigo-700 border border-indigo-500/10 rounded-2xl flex flex-col items-center justify-center text-white shadow-md shadow-indigo-600/10 p-4 text-center cursor-pointer"
             >
               <Minus className="h-7 w-7 mb-2" />
               <span className="font-extrabold text-base leading-tight">-5 Good Stock</span>
               <span className="text-[9px] text-indigo-100/80 mt-1 font-semibold">Bulk dispatch logs</span>
-            </motion.button>
+            </button>
 
             {/* Defect action */}
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+            <button
               onClick={() => setIsDefectOpen(true)}
-              className="col-span-1 sm:col-span-2 h-24 bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/35 rounded-2xl flex items-center justify-center gap-4 transition-all px-6 text-center cursor-pointer shadow-xs"
+              className="col-span-1 sm:col-span-2 h-24 bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/35 rounded-2xl flex items-center justify-center gap-4 px-6 text-center cursor-pointer shadow-xs"
             >
               <AlertTriangle className="h-7 w-7 text-amber-550 shrink-0" />
               <div className="text-left">
                 <span className="font-extrabold text-sm text-amber-700 dark:text-amber-400 block leading-tight">Mark Glass as Defective</span>
                 <span className="text-[9px] text-zinc-550 dark:text-zinc-400 mt-0.5 block font-semibold leading-normal">Transfer from good inventory to defective logs</span>
               </div>
-            </motion.button>
+            </button>
           </div>
 
         </div>

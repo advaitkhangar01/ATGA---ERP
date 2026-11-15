@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { DonutChart, BarChart, AreaChart } from '../components/ui/chart-mock';
 import { useStore, ViewType } from '../store/useStore';
-import { motion } from 'framer-motion';
 import { 
   Package, 
   Layers, 
@@ -103,15 +102,13 @@ export default function Dashboard() {
           <p className="text-indigo-100 text-xs md:text-sm mt-1 font-semibold">Real-time automotive safety glass inventory control and barcode tracking.</p>
         </div>
         <div className="flex flex-wrap gap-2 relative z-10">
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button 
             onClick={() => setView('quick-scan')}
-            className="flex items-center gap-2 bg-white text-indigo-700 font-extrabold text-xs px-4 py-3 rounded-xl hover:bg-indigo-50 active:scale-95 transition-all shadow-lg cursor-pointer"
+            className="flex items-center gap-2 bg-white text-indigo-700 font-extrabold text-xs px-4 py-3 rounded-xl hover:bg-indigo-50 shadow-md cursor-pointer"
           >
-            <Activity className="h-4 w-4 text-indigo-600 animate-pulse" />
+            <Activity className="h-4 w-4 text-indigo-600" />
             Quick Shopfloor Scan
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -210,18 +207,16 @@ export default function Dashboard() {
           ].map((action, idx) => {
             const Icon = action.icon;
             return (
-              <motion.button 
+              <button 
                 key={idx}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => setView(action.id as ViewType)}
-                className="flex flex-col items-center gap-2.5 p-4 bg-white/40 dark:bg-[#121218]/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl border border-zinc-200/50 dark:border-white/5 transition-all duration-200 cursor-pointer shadow-xs"
+                className="flex flex-col items-center gap-2.5 p-4 bg-white/40 dark:bg-[#121218]/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl border border-zinc-200/50 dark:border-white/5 cursor-pointer shadow-xs"
               >
                 <div className="h-10 w-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/40 dark:border-white/5 flex items-center justify-center text-zinc-600 dark:text-zinc-350 hover:text-indigo-600 hover:border-indigo-500/25">
                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-bold">{action.name}</span>
-              </motion.button>
+              </button>
             );
           })}
         </div>

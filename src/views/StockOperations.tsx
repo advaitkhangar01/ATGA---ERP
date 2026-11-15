@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore, Product } from '../store/useStore';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Dialog } from '../components/ui/dialog';
 import { 
   ArrowUpRight, 
@@ -14,7 +14,6 @@ import {
   Undo2,
   AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function StockOperations() {
   const { products, inventory, stockIn, stockOut, undoLastAction, lastAction } = useStore();
@@ -115,15 +114,13 @@ export default function StockOperations() {
 
         {/* Undo Action Trigger */}
         {lastAction && (
-          <motion.button 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+          <button 
             onClick={undoLastAction}
-            className="flex items-center gap-1.5 border border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-150 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-3 py-2 rounded-lg transition-all active:scale-95 shadow-md"
+            className="flex items-center gap-1.5 border border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-3 py-2 rounded-lg shadow-md"
           >
             <Undo2 className="h-4 w-4" />
             Undo Last Dispatch
-          </motion.button>
+          </button>
         )}
       </div>
 
@@ -190,9 +187,7 @@ export default function StockOperations() {
 
             {/* Selected Product Banner Specs */}
             {selectedProduct && (
-              <motion.div 
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div 
                 className="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-zinc-150 dark:border-zinc-850 flex items-center justify-between text-xs"
               >
                 <div>
@@ -205,7 +200,7 @@ export default function StockOperations() {
                   <span className="text-[9px] text-zinc-400 font-bold uppercase block">Current Qty</span>
                   <span className={`text-2xl font-black ${currentStock === 0 ? 'text-red-500' : 'text-emerald-500'}`}>{currentStock}</span>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Qty and Date inputs */}
@@ -394,16 +389,13 @@ export default function StockOperations() {
       {/* SUCCESS ANIMATED DIALOG MODAL */}
       <Dialog isOpen={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} title="Transaction Completed">
         <div className="space-y-4 text-xs text-center flex flex-col items-center p-4">
-          <motion.div
-            initial={{ scale: 0.5, rotate: -45, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={{ type: 'spring', damping: 15 }}
+          <div
             className={`h-16 w-16 rounded-full flex items-center justify-center ${
               successDetails?.type === 'in' ? 'bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600' : 'bg-indigo-100 dark:bg-indigo-950/20 text-indigo-600'
             }`}
           >
             <CheckCircle className="h-10 w-10" />
-          </motion.div>
+          </div>
 
           <div>
             <h4 className="text-sm font-black text-zinc-800 dark:text-white">Inventory Registered successfully!</h4>

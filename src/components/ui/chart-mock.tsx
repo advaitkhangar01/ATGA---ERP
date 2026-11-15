@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
 
 // 1. Donut Chart Component
 interface DonutData {
@@ -45,7 +44,7 @@ export function DonutChart({ data }: { data: DonutData[] }) {
             const isHovered = hoveredIdx === idx;
 
             return (
-              <motion.circle
+              <circle
                 key={item.name}
                 cx={center}
                 cy={center}
@@ -54,11 +53,9 @@ export function DonutChart({ data }: { data: DonutData[] }) {
                 stroke={item.color}
                 strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
                 strokeDasharray={item.strokeDasharray}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset: item.strokeDashoffset }}
-                transition={{ duration: 1, ease: 'easeOut', delay: idx * 0.05 }}
+                strokeDashoffset={item.strokeDashoffset}
                 transform={`rotate(${item.rotation} ${center} ${center})`}
-                style={{ originX: `${center}px`, originY: `${center}px`, cursor: 'pointer' }}
+                style={{ cursor: 'pointer' }}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
               />
@@ -146,19 +143,14 @@ export function BarChart({ data, height = 200, color = '#4f46e5' }: { data: BarD
               {/* Bar Stack */}
               <div className="w-full max-w-[32px] bg-zinc-100 dark:bg-zinc-800/50 rounded-t-md overflow-hidden flex flex-col justify-end h-full">
                 {bar.secondaryVal && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${secPct}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  <div
+                    style={{ height: `${secPct}%` }}
                     className="w-full bg-rose-500 hover:brightness-110"
                   />
                 )}
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${mainPct}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut', delay: idx * 0.05 }}
+                <div
+                  style={{ height: `${mainPct}%`, backgroundColor: color }}
                   className="w-full hover:brightness-110"
-                  style={{ backgroundColor: color }}
                 />
               </div>
               <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 truncate w-full text-center">
@@ -215,25 +207,19 @@ export function AreaChart({ data, height = 180, color = '#6366f1' }: { data: Tre
         <line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#27272a" strokeWidth={1} strokeDasharray="3 3" className="opacity-10 dark:opacity-20" />
 
         {/* Fill Area */}
-        <motion.path
+        <path
           d={areaD}
           fill="url(#areaGrad)"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
         />
 
         {/* Line Path */}
-        <motion.path
+        <path
           d={pathD}
           fill="none"
           stroke={color}
           strokeWidth={3}
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, ease: 'easeInOut' }}
         />
 
         {/* Data Interactive Nodes */}

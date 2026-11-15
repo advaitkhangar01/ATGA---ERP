@@ -3,6 +3,7 @@ import { useStore, Product } from '../store/useStore';
 import { Card, CardContent } from '../components/ui/card';
 import { Dialog } from '../components/ui/dialog';
 import { BarcodeGenerator } from '../components/ui/barcode-generator';
+import { GlassPictogram } from '../components/pictograms';
 import { 
   Plus, 
   Search, 
@@ -16,7 +17,10 @@ import {
   ChevronRight, 
   ChevronLeft,
   CheckCircle,
-  Eye
+  AlertTriangle,
+  X,
+  Check,
+  Cpu
 } from 'lucide-react';
 
 function generateRandomBarcode(): string {
@@ -41,6 +45,11 @@ export default function Products() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedProd, setSelectedProd] = useState<Product | null>(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'archive' | 'deactivate';
+    productId: string;
+    sku: string;
+  } | null>(null);
   
   // Form values
   const [formBrand, setFormBrand] = useState('Saint Gobain');
@@ -194,8 +203,9 @@ export default function Products() {
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => setView('sku-engine')}
-            className="border border-indigo-500/25 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-100 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-3 py-2 rounded-lg active:scale-95 transition-all"
+            className="border border-indigo-500/25 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-100 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5"
           >
+            <Cpu className="h-4 w-4" />
             SKU Engine Rule Generator
           </button>
           <button 
@@ -310,7 +320,10 @@ export default function Products() {
                   </div>
                   <div className="flex justify-between items-center gap-1">
                     <span className="text-zinc-400 shrink-0">Type:</span>
-                    <span className="font-bold truncate max-w-[130px]">{prod.glassType}</span>
+                    <span className="font-bold truncate max-w-[130px] flex items-center gap-1.5" title={prod.glassType}>
+                      <GlassPictogram glassType={prod.glassType} size={14} className="shrink-0 text-zinc-500" />
+                      <span className="truncate">{prod.glassType}</span>
+                    </span>
                   </div>
                   <div className="flex justify-between items-center gap-1">
                     <span className="text-zinc-400 shrink-0">Alert Min:</span>
@@ -336,7 +349,7 @@ export default function Products() {
                   </button>
                   {prod.status === 'active' ? (
                     <button 
-                      onClick={() => deactivateProduct(prod.id)}
+                      onClick={() => setConfirmAction({ type: 'deactivate', productId: prod.id, sku: prod.sku })}
                       className="flex items-center gap-1 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-500"
                     >
                       <Power className="h-3.5 w-3.5" />
@@ -344,7 +357,7 @@ export default function Products() {
                     </button>
                   ) : (
                     <button 
-                      onClick={() => archiveProduct(prod.id)}
+                      onClick={() => setConfirmAction({ type: 'archive', productId: prod.id, sku: prod.sku })}
                       className="flex items-center gap-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
                     >
                       <Archive className="h-3.5 w-3.5" />
@@ -635,6 +648,58 @@ export default function Products() {
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold shadow-md shadow-indigo-600/10"
             >
               Simulate File Import
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* CONFIRMATION DIALOG MODAL */}
+      <Dialog 
+        isOpen={!!confirmAction} 
+        onClose={() => setConfirmAction(null)} 
+        title={confirmAction?.type === 'archive' ? 'Confirm Product Archival' : 'Confirm Product Deactivation'}
+      >
+        <div className="space-y-4 text-xs">
+          <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-200">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Are you sure you want to {confirmAction?.type} product {confirmAction?.sku}?</p>
+              <p className="text-[11px] mt-1 text-amber-700 dark:text-amber-300">
+                {confirmAction?.type === 'archive' 
+                  ? 'Archived products will be permanently hidden from normal catalog selections.' 
+                  : 'Deactivated products cannot be received into new stock until reactivated.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setConfirmAction(null)}
+              className="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1.5"
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirmAction) {
+                  if (confirmAction.type === 'archive') {
+                    archiveProduct(confirmAction.productId);
+                  } else {
+                    deactivateProduct(confirmAction.productId);
+                  }
+                  setConfirmAction(null);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg font-bold text-white flex items-center gap-1.5 ${
+                confirmAction?.type === 'archive' 
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-amber-600 hover:bg-amber-700'
+              }`}
+            >
+              <Check className="h-3.5 w-3.5" />
+              Confirm {confirmAction?.type === 'archive' ? 'Archive' : 'Deactivate'}
             </button>
           </div>
         </div>

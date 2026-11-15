@@ -11,7 +11,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { BarcodeGenerator } from '../components/ui/barcode-generator';
-import { motion } from 'framer-motion';
 
 export default function Migration() {
   const { migrationProgress, unknownInventory, labelPending, startMigration, assignMigrationBarcode, reconcileMigration, addNotification } = useStore();
@@ -110,9 +109,8 @@ export default function Migration() {
                 
                 {/* Progress bar */}
                 <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${migrationProgress.percentage}%` }}
+                  <div 
+                    style={{ width: `${migrationProgress.percentage}%` }}
                     className="bg-indigo-600 h-full rounded-full"
                   />
                 </div>

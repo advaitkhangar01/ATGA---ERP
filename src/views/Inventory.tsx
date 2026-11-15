@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore, InventoryRecord, LedgerEntry } from '../store/useStore';
 import { Card, CardContent } from '../components/ui/card';
 import { BarcodeGenerator } from '../components/ui/barcode-generator';
+import { GlassPictogram } from '../components/pictograms';
 import { 
   Search, 
   Filter, 
@@ -15,9 +16,10 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Plus,
-  Minus
+  Minus,
+  Boxes,
+  RotateCcw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Inventory() {
   const { inventory, products, ledger, stockIn, stockOut, markDefective } = useStore();
@@ -180,14 +182,12 @@ export default function Inventory() {
           <p className="text-zinc-500 text-xs dark:text-zinc-400 font-semibold">Search warehouse stock, track locations, and view physical balance logs.</p>
         </div>
         <div className="flex items-center gap-2">
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 border border-zinc-200/60 dark:border-white/5 bg-white dark:bg-zinc-900 text-xs font-extrabold px-3.5 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 active:scale-95 transition-all shadow-xs cursor-pointer"
+          <button 
+            className="flex items-center gap-2 border border-slate-300 bg-white text-xs font-bold px-3.5 py-2.5 rounded hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
-            Export XLS Sheet
-          </motion.button>
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            <span>Export XLS Sheet</span>
+          </button>
         </div>
       </div>
 
@@ -246,69 +246,83 @@ export default function Inventory() {
       </Card>
 
       {/* Main Inventory Table */}
-      <Card className="overflow-hidden shadow-xs border border-zinc-200/50 dark:border-white/5 rounded-2xl">
+      <Card className="overflow-hidden shadow-xs border border-slate-200 rounded">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-zinc-50/50 dark:bg-zinc-900/30 border-b border-zinc-200/60 dark:border-white/5 text-zinc-400 dark:text-zinc-500 font-extrabold select-none whitespace-nowrap uppercase tracking-wider text-[10px]">
-                <th onClick={() => handleSort('sku')} className="p-4 cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
+              <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold select-none whitespace-nowrap uppercase tracking-wider text-[11px]">
+                <th className="p-3 text-center w-12">Pos</th>
+                <th onClick={() => handleSort('sku')} className="p-3 cursor-pointer hover:text-slate-900 transition-colors">
                   SKU Code <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th onClick={() => handleSort('brand')} className="p-4 cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
+                <th onClick={() => handleSort('brand')} className="p-3 cursor-pointer hover:text-slate-900 transition-colors">
                   Brand <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th onClick={() => handleSort('carModel')} className="p-4 cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
+                <th onClick={() => handleSort('carModel')} className="p-3 cursor-pointer hover:text-slate-900 transition-colors">
                   Model Compatibility <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th className="p-4">Glass Category</th>
-                <th onClick={() => handleSort('goodQty')} className="p-4 text-center cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
+                <th className="p-3">Glass Category</th>
+                <th onClick={() => handleSort('goodQty')} className="p-3 text-center cursor-pointer hover:text-slate-900 transition-colors">
                   Good Qty <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th onClick={() => handleSort('defectiveQty')} className="p-4 text-center cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
-                  Defective Qty <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
+                <th onClick={() => handleSort('defectiveQty')} className="p-3 text-center cursor-pointer hover:text-slate-900 transition-colors">
+                  Defective <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th onClick={() => handleSort('status')} className="p-4 text-center cursor-pointer hover:text-zinc-800 dark:hover:text-white transition-colors">
-                  Stock Status <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
+                <th onClick={() => handleSort('status')} className="p-3 text-center cursor-pointer hover:text-slate-900 transition-colors">
+                  Status <ArrowUpDown className="h-3.5 w-3.5 inline ml-1" />
                 </th>
-                <th className="p-4"><MapPin className="h-3.5 w-3.5 inline mr-1 text-indigo-500" />Bin Loc</th>
-                <th className="p-4">Action</th>
+                <th className="p-3"><MapPin className="h-3.5 w-3.5 inline mr-1 text-slate-500" />Rack Bin</th>
+                <th className="p-3">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/40 dark:divide-white/5 font-semibold text-zinc-700 dark:text-zinc-300">
+            <tbody className="divide-y divide-slate-200 font-medium text-slate-800">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-10 text-center text-zinc-450 text-xs italic">
-                    No matching inventory records found.
+                  <td colSpan={10} className="p-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Boxes className="h-8 w-8 text-slate-400" />
+                      <p className="font-semibold text-slate-700">No glass inventory matching filter criteria</p>
+                      <button
+                        onClick={() => { setSearch(''); setSelectedBrand('All'); setSelectedGlass('All'); setSelectedStatus('All'); }}
+                        className="inline-flex items-center space-x-1.5 text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        <span>Reset Filters</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 paginatedInventory.map((item) => (
                   <tr 
                     key={item.productId} 
-                    className="hover:bg-indigo-50/20 dark:hover:bg-white/5 transition-all group"
+                    className="hover:bg-slate-50 transition-colors"
                   >
-                    <td className="p-4 font-extrabold text-zinc-900 dark:text-white whitespace-nowrap text-xs tracking-wide">{item.sku}</td>
-                    <td className="p-4 whitespace-nowrap font-bold text-zinc-700 dark:text-zinc-300">{item.brand}</td>
-                    <td className="p-4 whitespace-nowrap text-zinc-700 dark:text-zinc-300">{item.carModel}</td>
-                    <td className="p-4 whitespace-nowrap text-zinc-500 dark:text-zinc-400">{item.glassType}</td>
-                    <td className="p-4 text-center font-extrabold text-emerald-600 dark:text-emerald-400 whitespace-nowrap text-xs">{item.goodQty}</td>
-                    <td className="p-4 text-center font-extrabold text-rose-600 dark:text-rose-400 whitespace-nowrap text-xs">{item.defectiveQty}</td>
-                    <td className="p-4 text-center whitespace-nowrap">
-                      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black border uppercase tracking-wider ${getStatusColor(item.status)}`}>
+                    <td className="p-3 text-center">
+                      <div className="inline-flex items-center justify-center p-1 bg-slate-50 rounded border border-slate-200">
+                        <GlassPictogram glassType={item.glassType} size={18} />
+                      </div>
+                    </td>
+                    <td className="p-3 font-mono font-bold text-slate-900 whitespace-nowrap text-xs">{item.sku}</td>
+                    <td className="p-3 whitespace-nowrap font-semibold text-slate-800">{item.brand}</td>
+                    <td className="p-3 whitespace-nowrap text-slate-800">{item.carModel}</td>
+                    <td className="p-3 whitespace-nowrap text-slate-600">{item.glassType}</td>
+                    <td className="p-3 text-center font-bold text-slate-900 whitespace-nowrap text-xs">{item.goodQty}</td>
+                    <td className="p-3 text-center font-bold text-red-600 whitespace-nowrap text-xs">{item.defectiveQty}</td>
+                    <td className="p-3 text-center whitespace-nowrap">
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(item.status)}`}>
                         {item.status}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-[10px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{item.location}</td>
-                    <td className="p-4 whitespace-nowrap">
-                      <motion.button 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                    <td className="p-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">{item.location}</td>
+                    <td className="p-3 whitespace-nowrap">
+                      <button 
                         onClick={() => setSelectedItem(item)}
-                        className="bg-zinc-100 hover:bg-indigo-650 dark:bg-zinc-900 border border-zinc-200/50 dark:border-white/5 hover:border-indigo-650 text-zinc-700 dark:text-zinc-300 hover:text-white px-3 py-2 rounded-xl transition-all flex items-center gap-1 font-extrabold cursor-pointer"
+                        className="bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 px-2.5 py-1.5 rounded text-xs transition-colors flex items-center space-x-1 font-semibold cursor-pointer"
                       >
-                        Inspect Details
-                        <ChevronRight className="h-3 w-3" />
-                      </motion.button>
+                        <span>Inspect Details</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -345,28 +359,18 @@ export default function Inventory() {
       </Card>
 
       {/* Details Side-Drawer Panel */}
-      <AnimatePresence>
-        {selectedItem && (
-          <div className="fixed inset-0 z-50 overflow-hidden">
-            {/* Drawer Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedItem(null)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            />
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Drawer Backdrop */}
+          <div
+            onClick={() => setSelectedItem(null)}
+            className="absolute inset-0 bg-slate-900/60"
+          />
 
-            {/* Drawer Container */}
-            <div className="absolute inset-y-0 right-0 max-w-xl w-full flex">
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="w-full bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-white/5 flex flex-col shadow-2xl"
-              >
-                {/* Header */}
+          {/* Drawer Container */}
+          <div className="absolute inset-y-0 right-0 max-w-xl w-full flex">
+            <div className="w-full bg-white border-l border-slate-300 flex flex-col shadow-xl">
+              {/* Header */}
                 <div className="p-6 border-b border-zinc-150 dark:border-white/5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/30">
                   <div>
                     <span className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border border-indigo-500/10">
@@ -580,11 +584,10 @@ export default function Inventory() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
