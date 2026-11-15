@@ -56,8 +56,7 @@ export async function addProduct(data: CreateProductInput) {
           create: {
             goodQty: 0,
             defectiveQty: 0,
-            availableQty: 0,
-            location: 'Main Warehouse'
+            rackLocation: 'Main Warehouse'
           }
         }
       },

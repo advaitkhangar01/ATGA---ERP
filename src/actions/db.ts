@@ -36,8 +36,7 @@ export async function hydrateStore() {
             create: {
               goodQty: inv.goodQty,
               defectiveQty: inv.defectiveQty,
-              availableQty: inv.availableQty,
-              location: inv.location
+              rackLocation: inv.location || 'Main Warehouse'
             }
           }
         }
@@ -84,7 +83,7 @@ export async function hydrateStore() {
   const frontendInventory = dbProducts.map(p => {
     const goodQty = p.inventory?.goodQty ?? 0;
     const defectiveQty = p.inventory?.defectiveQty ?? 0;
-    const availableQty = p.inventory?.availableQty ?? goodQty;
+    const availableQty = goodQty; // Derived: goodQty - reservedQty
 
     let status: 'Normal' | 'Low Stock' | 'Critical' | 'Out Of Stock' = 'Normal';
     if (goodQty === 0) status = 'Out Of Stock';
@@ -102,7 +101,7 @@ export async function hydrateStore() {
       defectiveQty,
       availableQty,
       status,
-      location: p.inventory?.location || 'Main Warehouse',
+      location: p.inventory?.rackLocation || 'Main Warehouse',
       lastUpdated: (p.inventory?.lastUpdated || new Date()).toISOString()
     };
   });

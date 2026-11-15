@@ -15,23 +15,20 @@ export async function stockIn(sku: string, qty: number, vendor: string, remarks:
         create: { 
           productId: product.id, 
           goodQty: qty, 
-          availableQty: qty, 
           defectiveQty: 0,
-          location: 'Main Warehouse' 
+          rackLocation: 'Main Warehouse' 
         },
         update: { 
-          goodQty: { increment: qty },
-          availableQty: { increment: qty }
+          goodQty: { increment: qty }
         }
       })
 
       const ledger = await tx.ledger.create({
         data: {
-          type: 'in',
-          actionType: 'IN',
+          type: 'IN',
           quantity: qty,
           brand: product.brand,
-          shop: 'Main Warehouse',
+          shop: 'Nagpur Central Warehouse',
           user: vendor || 'Vendor Delivery',
           remarks: remarks || `Vendor: ${vendor}`,
           productId: product.id,
@@ -58,18 +55,16 @@ export async function stockOut(sku: string, qty: number, customer: string, reaso
       const newInventory = await tx.inventory.update({
         where: { productId: product.id },
         data: { 
-          goodQty: { decrement: qty },
-          availableQty: { decrement: qty }
+          goodQty: { decrement: qty }
         }
       })
 
       const ledger = await tx.ledger.create({
         data: {
-          type: 'out',
-          actionType: 'OUT',
+          type: 'OUT',
           quantity: qty,
           brand: product.brand,
-          shop: 'Main Warehouse',
+          shop: 'Nagpur Central Warehouse',
           user: customer || 'Customer Dispatch',
           remarks: `${reason}: ${customer}. ${remarks}`,
           productId: product.id,
@@ -97,7 +92,6 @@ export async function markDefective(sku: string, qty: number, reason: string) {
         where: { productId: product.id },
         data: { 
           goodQty: { decrement: qty },
-          availableQty: { decrement: qty },
           defectiveQty: { increment: qty }
         }
       })
@@ -113,11 +107,10 @@ export async function markDefective(sku: string, qty: number, reason: string) {
       
       const ledger = await tx.ledger.create({
         data: {
-          type: 'defective_mark',
-          actionType: 'DEFECTIVE',
+          type: 'DEFECTIVE_MARK',
           quantity: qty,
           brand: product.brand,
-          shop: 'Main Warehouse',
+          shop: 'Nagpur Central Warehouse',
           user: 'staff@atulglass.com',
           remarks: reason,
           productId: product.id,

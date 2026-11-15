@@ -10,18 +10,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-// Optimize SQLite for concurrent access
-async function initSqlitePragmas() {
-  try {
-    await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;')
-    await prisma.$queryRawUnsafe('PRAGMA busy_timeout = 5000;')
-    await prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;')
-  } catch {
-    // If running against PostgreSQL or non-SQLite, ignore
-  }
-}
-initSqlitePragmas().catch(() => {})
-
 export async function withTransactionRetry<T>(
   action: () => Promise<T>,
   retries = 3,

@@ -23,8 +23,7 @@ export async function scrapDefective(id: string, user = 'admin@atulglass.com', s
 
       await tx.ledger.create({
         data: {
-          type: 'defective_scrap',
-          actionType: 'DEFECTIVE',
+          type: 'DEFECTIVE_SCRAP',
           quantity: def.quantity,
           brand: product.brand,
           shop,
@@ -60,15 +59,13 @@ export async function restoreDefective(id: string, qty: number, user = 'staff@at
         where: { productId: product.id },
         data: {
           defectiveQty: { decrement: qty },
-          goodQty: { increment: qty },
-          availableQty: { increment: qty }
+          goodQty: { increment: qty }
         }
       });
 
       await tx.ledger.create({
         data: {
-          type: 'defective_restore',
-          actionType: 'IN',
+          type: 'DEFECTIVE_RESTORE',
           quantity: qty,
           brand: product.brand,
           shop,

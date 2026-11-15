@@ -3,32 +3,43 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String @unique
-  role     String // 'admin' | 'staff'
-  password String // Hashed password
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String   // 'admin' | 'staff'
+  password  String   // salt:hash via Node scryptSync
+  name      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ledgers   Ledger[]
+
+  @@index([email])
 }
 
 model Product {
   id               String     @id @default(cuid())
   sku              String     @unique
-  brand            String
-  carBrand         String     @default("Maruti")
-  carModel         String
-  glassType        String
+  brand            String     // 'AIS' | 'Saint Gobain' | 'XYG' | 'Fuyao'
+  carBrand         String     // 'Maruti' | 'Hyundai' | 'Tata' | 'Mahindra' | etc.
+  carModel         String     // 'Swift' | 'Creta' | 'Nexon' | etc.
+  glassType        String     // 'Windshield' | 'Rear Glass' | 'Door Glass' | 'Quarter Glass' | 'Vent Glass' | 'Sunroof'
+  position         String     @default("Front") // 'Front' | 'Rear' | 'Front Left' | 'Front Right' | 'Rear Left' | 'Rear Right'
   description      String     @default("")
-  compatibleModels String     @default("[]")
+  compatibleModels String     @default("[]") // JSON stringified array of models
   status           String     @default("active") // 'active' | 'deactivated' | 'archived'
   threshold        Int        @default(5)
-  barcode          String?
+  barcode          String?    @unique
   createdDate      DateTime   @default(now())
   inventory        Inventory?
   ledgers          Ledger[]
+
+  @@index([sku])
+  @@index([carBrand, carModel])
+  @@index([brand])
 }
 
 model Inventory {
@@ -37,38 +48,65 @@ model Inventory {
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   goodQty      Int      @default(0)
   defectiveQty Int      @default(0)
-  availableQty Int      @default(0)
-  location     String   @default("Main Warehouse")
-  lastUpdated  DateTime @default(now())
+  rackLocation String   @default("Main Warehouse")
+  lastUpdated  DateTime @default(now()) @updatedAt
+
+  @@index([productId])
+  @@index([rackLocation])
 }
 
 model Ledger {
   id         String   @id @default(cuid())
-  type       String   @default("in") // 'in' | 'out' | 'defective_mark' | 'defective_scrap' | 'defective_restore' | 'audit_adjust'
-  actionType String   @default("IN") // 'IN' | 'OUT' | 'DEFECTIVE'
-  quantity   Int
+  type       String   // 'IN' | 'OUT' | 'DEFECTIVE_MARK' | 'DEFECTIVE_SCRAP' | 'DEFECTIVE_RESTORE' | 'AUDIT_ADJUST'
+  quantity   Int      // Quantity delta
   brand      String   @default("")
-  shop       String   @default("Main Warehouse")
+  shop       String   @default("Nagpur Central Warehouse")
   user       String   @default("system")
-  timestamp  DateTime @default(now())
   remarks    String?
+  timestamp  DateTime @default(now())
   productId  String
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId     String?
+  userRel    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([timestamp])
+  @@index([type])
 }
 
 model Defective {
-  id        String   @id @default(cuid())
-  sku       String
-  quantity  Int
-  reason    String
-  timestamp DateTime @default(now())
-  status    String   @default("pending") // 'pending', 'scrapped', 'restored'
+  id         String    @id @default(cuid())
+  sku        String
+  quantity   Int
+  reason     String
+  timestamp  DateTime  @default(now())
+  status     String    @default("pending") // 'pending' | 'scrapped' | 'restored'
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  @@index([sku])
+  @@index([status])
 }
 
 model AuditSession {
-  id     String   @id @default(cuid())
-  name   String
-  date   DateTime @default(now())
-  status String   @default("in-progress") // 'in-progress', 'completed'
+  id          String      @id @default(cuid())
+  name        String
+  startDate   DateTime    @default(now())
+  completedAt DateTime?
+  status      String      @default("in-progress") // 'in-progress' | 'completed' | 'cancelled'
+  scans       AuditScan[]
+}
+
+model AuditScan {
+  id             String       @id @default(cuid())
+  auditSessionId String
+  auditSession   AuditSession @relation(fields: [auditSessionId], references: [id], onDelete: Cascade)
+  sku            String
+  expectedQty    Int
+  actualQty      Int
+  status         String       @default("pending") // 'pending' | 'reconciled'
+  scannedAt      DateTime     @default(now())
+
+  @@index([auditSessionId])
+  @@index([sku])
 }

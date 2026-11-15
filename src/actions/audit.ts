@@ -50,20 +50,17 @@ export async function reconcileAudit(
         create: {
           productId: product.id,
           goodQty: adj.actual,
-          availableQty: adj.actual,
           defectiveQty: 0,
-          location: 'Main Warehouse'
+          rackLocation: 'Main Warehouse'
         },
         update: {
-          goodQty: adj.actual,
-          availableQty: adj.actual
+          goodQty: adj.actual
         }
       });
 
       await tx.ledger.create({
         data: {
-          type: 'audit_adjust',
-          actionType: diff >= 0 ? 'IN' : 'OUT',
+          type: 'AUDIT_ADJUST',
           quantity: Math.abs(diff),
           brand: product.brand,
           shop,
