@@ -17,6 +17,7 @@ RUN npm run build
 # Production Runner Stage (Non-root security context)
 FROM node:20-alpine AS runner
 WORKDIR /app
+RUN chown node:node /app
 
 ENV NODE_ENV=production
 ENV PORT=3000

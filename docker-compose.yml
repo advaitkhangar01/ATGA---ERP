@@ -26,7 +26,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-atuladmin}:${POSTGRES_PASSWORD:-atulpass123}@postgres:5432/${POSTGRES_DB:-atulglass_db}?schema=public
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-atuladmin}:${POSTGRES_PASSWORD:-atulpass123}@postgres:5432/${POSTGRES_DB:-atulglass_db}?schema=public}
       SESSION_SECRET: ${SESSION_SECRET}
     ports:
       - "127.0.0.1:3000:3000"

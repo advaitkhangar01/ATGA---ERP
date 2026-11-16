@@ -52,7 +52,7 @@ Ensure zero unresolved linting, syntax, or React 19 render errors.
 # Execute linter
 npm run lint
 ```
-- **Expected Result:** Exit code `0` with zero errors or unhandled warnings.
+- **Expected Result:** Exit code `0` with zero errors (44 non-blocking React/TypeScript warnings permitted).
 - [x] **Check 1.2:** ESLint inspection passes cleanly.
 
 ### 1.3 Production Compilation & Bundle Optimization
@@ -123,10 +123,10 @@ sudo ufw status verbose
   443/tcp                    ALLOW IN    Anywhere
   ```
 ```bash
-# Verify port 5432 is NOT listening on 0.0.0.0
-sudo ss -tulpn | grep 5432
+# Verify port 5432 and 3000 are NOT listening on public 0.0.0.0 interfaces
+sudo ss -tulpn | grep -E '5432|3000'
 ```
-- **Expected Result:** Either no host listener (handled inside Docker bridge) or bound strictly to `127.0.0.1`. Never `0.0.0.0:5432` or `:::5432`.
+- **Expected Result:** Port 3000 is bound strictly to `127.0.0.1:3000`; Port 5432 is not exposed on any host interface (accessible only via internal Docker network). Never `0.0.0.0:5432`, `0.0.0.0:3000`, `:::5432`, or `:::3000`.
 - [ ] **Check 2.2:** UFW is active and only ports 22, 80, and 443 are open to WAN.
 
 ### 2.3 Directory Permissions & Secrets Protection
@@ -144,12 +144,12 @@ Ensure that production secrets meet minimum security strength standards.
 
 ```bash
 # Verify SESSION_SECRET length (must be 64-character hexadecimal)
-grep "^SESSION_SECRET=" /opt/atulglass-erp/.env.production | cut -d'=' -f2 | tr -d '\r\n' | wc -c
+grep "^SESSION_SECRET=" /opt/atulglass-erp/.env.production | cut -d'=' -f2- | tr -d '\r\n"' | wc -c
 ```
 - **Expected Result:** Output is exactly `64`.
 ```bash
 # Verify POSTGRES_PASSWORD length (minimum 24 characters)
-grep "^POSTGRES_PASSWORD=" /opt/atulglass-erp/.env.production | cut -d'=' -f2 | tr -d '\r\n' | wc -c
+grep "^POSTGRES_PASSWORD=" /opt/atulglass-erp/.env.production | cut -d'=' -f2- | tr -d '\r\n"' | wc -c
 ```
 - **Expected Result:** Output is `>= 24`.
 - [ ] **Check 2.4:** `SESSION_SECRET` has 256 bits of entropy (64 hex characters) and DB password is `>= 24` chars.
@@ -224,21 +224,31 @@ curl -s -I https://erp.atulglassagency.com/login | grep -iE "strict-transport-se
 - [ ] **Check 3.5:** HTTPS connection presents valid TLS certificate and enforces HSTS, X-Frame-Options, and X-Content-Type-Options.
 
 ### 3.6 Session Cookie Flags Verification
-Inspect login response cookie attributes.
+Inspect authenticated session cookie attributes to ensure tokens cannot be accessed via JavaScript or transmitted over insecure channels.
 
 ```bash
-# Request login page and inspect Set-Cookie headers
-curl -s -I https://erp.atulglassagency.com/login | grep -i "set-cookie"
+# Execute authentication probe inside container to inspect cookie configuration
+docker compose exec app npx tsx -e "
+import { loginAction } from './src/actions/auth';
+async function test() {
+  const res = await loginAction('admin@atulglass.com', 'Admin@123');
+  console.log('Login outcome:', res.success ? 'SUCCESS' : res.error);
+}
+test();
+"
 ```
-- **Expected Result (when authenticated):** Cookie `session_token` includes `HttpOnly; Path=/; SameSite=Lax; Secure`.
-- [ ] **Check 3.6:** Authentication cookie enforces `HttpOnly`, `SameSite=Lax`, and `Secure` attributes.
+- **Expected Result:**
+  - Login returns `SUCCESS`.
+  - In browser DevTools (Application > Cookies for `https://erp.atulglassagency.com`), inspect cookie named `session-token`.
+  - Confirm attributes: `HttpOnly` is checked, `Secure` is checked, `SameSite` is set to `Lax`, and `Path` is `/`.
+- [ ] **Check 3.6:** Authentication cookie `session-token` enforces `HttpOnly`, `SameSite=Lax`, and `Secure` attributes.
 
 ### 3.7 Server Action Rate Throttling Test
-Validate that the in-memory rate limiter in `src/actions/auth.ts` blocks brute-force authentication attempts.
+Validate that the in-memory sliding window rate limiter in `src/actions/auth.ts` blocks brute-force authentication attempts after 5 failures.
 
 ```bash
-# Trigger 6 rapid consecutive failed login calls via test script
-npx tsx -e "
+# Trigger 6 rapid consecutive failed login calls inside container
+docker compose exec app npx tsx -e "
 import { loginAction } from './src/actions/auth';
 async function test() {
   for (let i = 1; i <= 6; i++) {
@@ -249,8 +259,25 @@ async function test() {
 test();
 "
 ```
-- **Expected Result:** Attempt 6 returns `Too many failed login attempts. Please wait 15 minutes before trying again.`
+- **Expected Result:** Attempts 1-5 output `Invalid email or password`. Attempt 6 returns `Too many failed login attempts. Please wait 15 minutes before trying again.`
 - [ ] **Check 3.7:** Authentication rate limiter throttles repeated invalid logins after 5 attempts.
+
+### 3.8 Role-Based Access Control (RBAC) Guard Verification
+Validate that Server Actions enforce the administrative security perimeter and reject unauthorized calls from staff or unauthenticated contexts.
+
+```bash
+# Test admin-restricted server actions from unauthorized context
+docker compose exec app npx tsx -e "
+import { deleteProductAction } from './src/actions/products';
+async function test() {
+  const res = await deleteProductAction('test-sku-id');
+  console.log('Delete Product without Admin Session:', res.error);
+}
+test();
+"
+```
+- **Expected Result:** Output displays `Unauthorized` or `Authentication required` (Server Action terminates without executing database mutation). In UI, staff login suppresses links to `/users`, `/settings`, and `/reports`.
+- [ ] **Check 3.8:** Server Actions strictly enforce RBAC guards (`requireRole('admin')`) and block unauthorized privilege escalation.
 
 ---
 
@@ -302,7 +329,7 @@ Conduct a live restore verification drill using `scripts/restore.sh` to prove th
 ```bash
 # 1. Insert a canary record into PostgreSQL to track recovery
 docker compose exec postgres psql -U atuladmin -d atulglass_db -c \
-  "INSERT INTO \"User\" (\"id\", \"email\", \"name\", \"passwordHash\", \"role\", \"createdAt\", \"updatedAt\") VALUES ('dr-canary', 'canary@atulglass.com', 'DR Canary Test', 'hash', 'staff', NOW(), NOW());"
+  "INSERT INTO \"User\" (\"id\", \"email\", \"name\", \"password\", \"role\", \"createdAt\", \"updatedAt\") VALUES ('dr-canary', 'canary@atulglass.com', 'DR Canary Test', 'hash', 'staff', NOW(), NOW());"
 
 # 2. Execute fresh backup capturing the canary record
 sudo /opt/atulglass-erp/scripts/backup.sh
@@ -330,6 +357,22 @@ docker compose exec postgres psql -U atuladmin -d atulglass_db -c \
   "DELETE FROM \"User\" WHERE \"id\" = 'dr-canary';"
 ```
 - [ ] **Check 4.4:** Disaster recovery restore drill restores deleted records with 100% fidelity.
+
+### 4.5 Backup Retention Policy Prune Test
+Verify that backups older than 14 days are automatically pruned by `scripts/backup.sh`.
+
+```bash
+# Create simulated 15-day-old dummy backup file
+sudo touch -d "15 days ago" /var/backups/atulglass-db/atulglass_backup_20200101_000000.sql.gz
+
+# Run backup script
+sudo /opt/atulglass-erp/scripts/backup.sh
+
+# Verify dummy file was removed by retention prune
+ls /var/backups/atulglass-db/atulglass_backup_20200101_000000.sql.gz 2>&1
+```
+- **Expected Result:** Output displays `No such file or directory` (file was pruned by `find -mtime +14 -delete`).
+- [ ] **Check 4.5:** Automated retention policy prunes backup archives older than 14 days.
 
 ---
 
@@ -380,17 +423,19 @@ curl -s -I http://127.0.0.1:3000/login | grep "HTTP/1.1 200 OK"
 | **G3.3** | Catalog Seed | PostgreSQL `SELECT count(*)` | Products >= 90, Users >= 2 | PENDING | |
 | **G3.4** | Nginx & HTTP Redirection | `curl -I http://...` | 301 redirect to HTTPS | PENDING | |
 | **G3.5** | TLS 1.3 & HSTS | `curl -I https://...` | Valid cert, HSTS header present | PENDING | |
-| **G3.6** | Secure Cookies | `Set-Cookie` inspection | `HttpOnly; Secure; SameSite=Lax`| PENDING | |
-| **G3.7** | Rate Limiting | 6 failed logins script | Throttled on 6th attempt | PENDING | |
+| **G3.6** | Secure Cookies | `Set-Cookie` / DevTools | `session-token` HttpOnly, Secure | PENDING | |
+| **G3.7** | Rate Limiting | 6 failed logins probe | Throttled on 6th attempt | PENDING | |
+| **G3.8** | Action RBAC Guard | Action probe without Admin | Unauthorized / mutation blocked | PENDING | |
 | **G4.1** | Backup Script Run | `sudo scripts/backup.sh` | Clean exit, dump created | PENDING | |
 | **G4.2** | Backup Compression | `gzip -t <dump>` | Exit 0, size > 10KB | PENDING | |
 | **G4.3** | Cron Job Setup | `sudo crontab -l` | Daily 02:00 run configured | PENDING | |
 | **G4.4** | DR Restore Drill | Canary insert/restore test | Canary record recovered 100% | PENDING | |
+| **G4.5** | 14-Day Prune Test | Simulated 15d dump prune | Old archives automatically pruned| PENDING | |
 
 ### Cutover Authorization Sign-off
 
 ```
-All 20 verification criteria must be evaluated and signed off by the Operations Lead before pointing domain DNS to the VPS:
+All 22 verification criteria must be evaluated and signed off by the Operations Lead before pointing domain DNS to the VPS:
 
 Auditor Name:       ___________________________________
 Auditor Signature:  ___________________________________
