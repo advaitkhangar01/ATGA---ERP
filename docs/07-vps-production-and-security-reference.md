@@ -17,9 +17,9 @@
 | **Production Secrets** | `/opt/atulglass-erp/.env.production` | Environment & database passwords (`chmod 600`, root only) |
 | **Docker Compose** | `/opt/atulglass-erp/docker-compose.yml` | Multi-container orchestration (App + Postgres 16) |
 | **PostgreSQL Data Volume** | `/var/lib/docker/volumes/atulglass_erp_postgres_data/` | Persistent PostgreSQL database cluster files |
-| **Nginx Site Config** | `/etc/nginx/sites-available/atulglass-erp` | Reverse proxy virtual host with TLS termination |
-| **Nginx Enabled Link** | `/etc/nginx/sites-enabled/atulglass-erp` | Symlink to active configuration |
-| **SSL Certificates** | `/etc/letsencrypt/live/erp.atulglassagency.com/` | Let's Encrypt `fullchain.pem` & `privkey.pem` |
+| **Nginx Site Config** | `/etc/nginx/sites-available/atga.reachx.world` | Reverse proxy virtual host with TLS termination |
+| **Nginx Enabled Link** | `/etc/nginx/sites-enabled/atga.reachx.world` | Symlink to active configuration |
+| **SSL Certificates** | `/etc/letsencrypt/live/atga.reachx.world/` | Let's Encrypt `fullchain.pem` & `privkey.pem` |
 | **Database Backups** | `/var/backups/atulglass-db/` | Nightly compressed dumps (`atulglass_backup_*.sql.gz`, `0600`) |
 | **Backup Automation** | `/opt/atulglass-erp/scripts/backup.sh` | Automated nightly `pg_dump` cron executable (`0750`) |
 | **Disaster Recovery** | `/opt/atulglass-erp/scripts/restore.sh` | Disaster recovery database restore script (`0750`) |

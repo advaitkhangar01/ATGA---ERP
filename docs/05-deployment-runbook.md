@@ -1,8 +1,10 @@
 # 05. Ubuntu VPS Deployment & Operations Runbook
 
 **Target Operating System:** Ubuntu 24.04 LTS (64-bit Cloud VPS)  
-**Stack Components:** Nginx (Host SSL Termination), Docker Compose (Next.js Application + PostgreSQL 16), Certbot, UFW  
-**Domain Example:** `erp.atulglassagency.com`  
+**Host IP:** `187.127.158.74`  
+**Production Domain:** `atga.reachx.world`  
+**Host Environment:** Multi-site shared VPS (co-existing with 2-3 existing live websites)  
+**Stack Components:** Nginx (Host SSL Termination), Docker Compose (Next.js Application on loopback port 3040 + PostgreSQL 16), Certbot, UFW  
 
 ---
 
@@ -111,7 +113,7 @@ services:
     env_file:
       - .env.production
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3040:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -156,14 +158,14 @@ CMD ["npm", "start"]
 
 ---
 
-## 4. Nginx Reverse Proxy & SSL (Certbot)
+## 4. Nginx Reverse Proxy & SSL (Certbot) — Multi-Site Isolation
 
-Create Nginx site configuration:
+On a VPS already hosting other websites, create an isolated virtual host for `atga.reachx.world` proxying to `127.0.0.1:3040` (never edit global `nginx.conf` or other sites' files):
 
 ```bash
-cat << 'EOF' > /etc/nginx/sites-available/atulglass-erp
+cat << 'EOF' > /etc/nginx/sites-available/atga.reachx.world
 server {
-    server_name erp.atulglassagency.com;
+    server_name atga.reachx.world;
 
     client_max_body_size 20M;
 
@@ -174,7 +176,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3040;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -187,11 +189,14 @@ server {
 }
 EOF
 
-ln -s /etc/nginx/sites-available/atulglass-erp /etc/nginx/sites-enabled/
+# Enable site via symlink
+ln -s /etc/nginx/sites-available/atga.reachx.world /etc/nginx/sites-enabled/
+
+# Test syntax across all vhosts before reloading (zero downtime for sibling sites)
 nginx -t && systemctl reload nginx
 
-# Issue Let's Encrypt SSL certificate
-certbot --nginx -d erp.atulglassagency.com --non-interactive --agree-tos --email admin@atulglass.com
+# Issue Let's Encrypt SSL certificate exclusively for atga.reachx.world
+certbot --nginx -d atga.reachx.world --non-interactive --agree-tos --email admin@atulglass.com
 ```
 
 ---

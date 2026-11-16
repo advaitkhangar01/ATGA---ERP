@@ -1,11 +1,26 @@
 # 08. VPS Production Readiness Audit Plan & Verification Protocol
 
 **System:** Atul Glass Agency ERP  
-**Target Environment:** Ubuntu 24.04 LTS (64-bit Cloud VPS)  
+**Target Domain:** `atga.reachx.world`  
+**Target VPS IP:** `187.127.158.74`  
+**Target Environment:** Ubuntu 24.04 LTS (64-bit Cloud VPS — Shared Multi-Tenant Host with 2-3 existing live websites)  
 **Document Purpose:** Mandatory 4-stage gated verification protocol and scorecard before cutting over live production traffic.  
-**Binding Architecture:** Docker Compose (Node.js 20 Alpine `USER node` + PostgreSQL 16 Alpine), Host Nginx (TLS 1.3 / HSTS termination), UFW.  
+**Binding Architecture:** Docker Compose (Node.js 20 Alpine `USER node` + PostgreSQL 16 Alpine), Host Nginx Virtual Host (TLS 1.3 / HSTS termination), UFW.  
 **Auditor:** Operations & Lead Full-Stack Engineer  
 **Date:** November 16, 2026  
+
+---
+
+## Multi-Site Shared VPS Coexistence Rules
+
+Because this VPS (`187.127.158.74`) already hosts 2-3 production websites, the deployment and audit protocol strictly enforces isolation to prevent disrupting existing sites:
+
+1. **Port Isolation (Port 3040):** Next.js is bound to host loopback `127.0.0.1:3040:3000` via `APP_HOST_PORT=3040` to guarantee zero conflict with default Node.js port 3000 used by existing apps.
+2. **Nginx Safe Virtual Hosting:** Isolated vhost `/etc/nginx/sites-available/atga.reachx.world` with symlink in `sites-enabled/`. Never modify main `nginx.conf` or default sites. Reload configuration exclusively using `systemctl reload nginx` (never `restart`).
+3. **Certbot Scoped Issuance:** Run Certbot strictly targeting `-d atga.reachx.world` to avoid touching or overwriting SSL certificates of co-hosted domains.
+4. **Firewall (UFW) Non-Destructive Audit:** Verify that ports 22, 80, and 443 are open without flushing existing custom firewall rules required by sibling websites.
+5. **DNS Pre-Flight Check:** Verify `atga.reachx.world` resolves to `187.127.158.74` before triggering Certbot SSL validation.
+6. **Container & Volume Namespace:** All containers (`atulglass_app`, `atulglass_postgres`) and networks (`internal_net`) are project-isolated.
 
 ---
 
@@ -123,10 +138,10 @@ sudo ufw status verbose
   443/tcp                    ALLOW IN    Anywhere
   ```
 ```bash
-# Verify port 5432 and 3000 are NOT listening on public 0.0.0.0 interfaces
-sudo ss -tulpn | grep -E '5432|3000'
+# Verify port 5432, 3000, and 3040 are NOT listening on public 0.0.0.0 interfaces
+sudo ss -tulpn | grep -E '5432|3000|3040'
 ```
-- **Expected Result:** Port 3000 is bound strictly to `127.0.0.1:3000`; Port 5432 is not exposed on any host interface (accessible only via internal Docker network). Never `0.0.0.0:5432`, `0.0.0.0:3000`, `:::5432`, or `:::3000`.
+- **Expected Result:** Port 3040 is bound strictly to `127.0.0.1:3040`; Port 5432 is not exposed on any host interface (internal Docker network only). No application ports exposed on `0.0.0.0` or `:::`.
 - [ ] **Check 2.2:** UFW is active and only ports 22, 80, and 443 are open to WAN.
 
 ### 2.3 Directory Permissions & Secrets Protection
@@ -153,6 +168,16 @@ grep "^POSTGRES_PASSWORD=" /opt/atulglass-erp/.env.production | cut -d'=' -f2- |
 ```
 - **Expected Result:** Output is `>= 24`.
 - [ ] **Check 2.4:** `SESSION_SECRET` has 256 bits of entropy (64 hex characters) and DB password is `>= 24` chars.
+
+### 2.5 Domain DNS Propagation & A-Record Pre-Flight
+Verify that DNS for `atga.reachx.world` is pointing directly to VPS IP `187.127.158.74` before attempting SSL certificate issuance.
+
+```bash
+# Inspect DNS A-record resolution
+dig +short atga.reachx.world
+```
+- **Expected Result:** Output returns exactly `187.127.158.74`.
+- [ ] **Check 2.5:** DNS A-record resolves to VPS IP `187.127.158.74`.
 
 ---
 
@@ -195,19 +220,19 @@ docker compose exec postgres psql -U atuladmin -d atulglass_db -c "SELECT count(
 - [ ] **Check 3.3:** Database contains seeded users and automotive glass SKU catalog.
 
 ### 3.4 Nginx Reverse Proxy & HTTP-to-HTTPS Redirection
-Test Nginx configuration and automated HTTP redirection.
+Test Nginx virtual host configuration (`/etc/nginx/sites-available/atga.reachx.world` proxying to `127.0.0.1:3040`) and automated HTTP redirection.
 
 ```bash
-# Test Nginx configuration syntax
+# Test Nginx configuration syntax (safe for all co-hosted sites)
 sudo nginx -t
 
 # Test HTTP redirects to HTTPS with 301 Moved Permanently
-curl -s -I http://erp.atulglassagency.com | grep -E "HTTP|Location"
+curl -s -I http://atga.reachx.world | grep -E "HTTP|Location"
 ```
 - **Expected Result:**
   - `nginx: configuration file /etc/nginx/nginx.conf test is successful`
   - `HTTP/1.1 301 Moved Permanently`
-  - `Location: https://erp.atulglassagency.com/`
+  - `Location: https://atga.reachx.world/`
 - [ ] **Check 3.4:** Nginx proxy configuration syntax is valid and HTTP forces 301 redirect to HTTPS.
 
 ### 3.5 TLS 1.3 & HSTS Security Header Verification
@@ -215,7 +240,7 @@ Audit the HTTPS endpoint for security headers and modern SSL protocols.
 
 ```bash
 # Inspect response headers on HTTPS endpoint
-curl -s -I https://erp.atulglassagency.com/login | grep -iE "strict-transport-security|x-frame-options|x-content-type-options"
+curl -s -I https://atga.reachx.world/login | grep -iE "strict-transport-security|x-frame-options|x-content-type-options"
 ```
 - **Expected Result:**
   - `strict-transport-security: max-age=31536000; includeSubDomains`
@@ -239,7 +264,7 @@ test();
 ```
 - **Expected Result:**
   - Login returns `SUCCESS`.
-  - In browser DevTools (Application > Cookies for `https://erp.atulglassagency.com`), inspect cookie named `session-token`.
+  - In browser DevTools (Application > Cookies for `https://atga.reachx.world`), inspect cookie named `session-token`.
   - Confirm attributes: `HttpOnly` is checked, `Secure` is checked, `SameSite` is set to `Lax`, and `Path` is `/`.
 - [ ] **Check 3.6:** Authentication cookie `session-token` enforces `HttpOnly`, `SameSite=Lax`, and `Secure` attributes.
 
@@ -399,8 +424,8 @@ sudo /opt/atulglass-erp/scripts/restore.sh /var/backups/atulglass-db/<LATEST_VER
 
 ### 5.2 Verification of Rollback
 ```bash
-# Verify app is responding on port 3000
-curl -s -I http://127.0.0.1:3000/login | grep "HTTP/1.1 200 OK"
+# Verify app is responding on host loopback port 3040
+curl -s -I http://127.0.0.1:3040/login | grep "HTTP/1.1 200 OK"
 ```
 
 ---
@@ -418,6 +443,7 @@ curl -s -I http://127.0.0.1:3000/login | grep "HTTP/1.1 200 OK"
 | **G2.2** | UFW Perimeter Lock | `sudo ufw status verbose` | Only 22, 80, 443 open to WAN | PENDING | |
 | **G2.3** | File Permissions | `ls -l /opt/.../.env.production` | Mode `0600`, owned `root:root` | PENDING | |
 | **G2.4** | Secret Entropy | Length check commands | `SESSION_SECRET`=64, DB pass>=24 | PENDING | |
+| **G2.5** | DNS A-Record | `dig +short atga.reachx.world` | Resolves to `187.127.158.74` | PENDING | |
 | **G3.1** | Container Health | `docker compose ps` | Postgres healthy, App running | PENDING | |
 | **G3.2** | Prisma Migration | `npx prisma migrate status` | Database schema up to date | PENDING | |
 | **G3.3** | Catalog Seed | PostgreSQL `SELECT count(*)` | Products >= 90, Users >= 2 | PENDING | |
@@ -435,7 +461,7 @@ curl -s -I http://127.0.0.1:3000/login | grep "HTTP/1.1 200 OK"
 ### Cutover Authorization Sign-off
 
 ```
-All 22 verification criteria must be evaluated and signed off by the Operations Lead before pointing domain DNS to the VPS:
+All 23 verification criteria must be evaluated and signed off by the Operations Lead before pointing domain DNS to the VPS:
 
 Auditor Name:       ___________________________________
 Auditor Signature:  ___________________________________
