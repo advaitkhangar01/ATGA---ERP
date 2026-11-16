@@ -300,7 +300,7 @@ erDiagram
 
 When deploying to the Ubuntu VPS, follow this checklist to ensure production stability:
 
-- [ ] **Docker Daemon:** Configured to start on boot (`systemctl enable docker`).
+- [ ] **Docker Daemon & Non-Root Context:** Configured to start on boot (`systemctl enable docker`). Application container runs with non-root user context (`USER node`).
 - [ ] **Service Resilience:** Containers set to `restart: always` in `docker-compose.yml`.
 - [ ] **Database Healthcheck:** Application waits for `postgres` container healthcheck (`condition: service_healthy`) before launching.
 - [ ] **Memory & Swap:** Ensure VPS has at least 1 GB RAM + 2 GB swap file configured:
@@ -312,7 +312,7 @@ When deploying to the Ubuntu VPS, follow this checklist to ensure production sta
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
   ```
 - [ ] **Firewall (UFW):** Ports 80, 443, and SSH allowed. Port 5432 bound only to internal Docker network (never exposed to public internet).
-- [ ] **Nginx Reverse Proxy:** HTTP/2 enabled, upstream keepalive, `client_max_body_size 20M;`, SSL via Let's Encrypt with auto-renewal (`certbot renew --dry-run`).
+- [ ] **Nginx Reverse Proxy & Security Headers:** HTTP/2 enabled, upstream keepalive, `client_max_body_size 20M;`, SSL via Let's Encrypt with auto-renewal (`certbot renew --dry-run`). Enforce HSTS (`Strict-Transport-Security "max-age=31536000; includeSubDomains"`), `X-Frame-Options SAMEORIGIN`, and `X-Content-Type-Options nosniff`.
 - [ ] **Automated Backups:** Cron job registered to execute `/opt/atulglass-erp/scripts/backup.sh` every morning at 02:00 AM with 14-day local retention.
 - [ ] **Disaster Recovery Tested:** Verified restore script using `/opt/atulglass-erp/scripts/restore.sh` against test backup dump.
 
