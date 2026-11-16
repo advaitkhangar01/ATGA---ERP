@@ -43,7 +43,7 @@ Ensure zero type errors across the entire codebase.
 npx tsc --noEmit
 ```
 - **Expected Result:** Exit code `0` with zero error messages.
-- [ ] **Check 1.1:** TypeScript static compilation passes cleanly.
+- [x] **Check 1.1:** TypeScript static compilation passes cleanly.
 
 ### 1.2 ESLint Code Quality Audit
 Ensure zero unresolved linting, syntax, or React 19 render errors.
@@ -53,7 +53,7 @@ Ensure zero unresolved linting, syntax, or React 19 render errors.
 npm run lint
 ```
 - **Expected Result:** Exit code `0` with zero errors or unhandled warnings.
-- [ ] **Check 1.2:** ESLint inspection passes cleanly.
+- [x] **Check 1.2:** ESLint inspection passes cleanly.
 
 ### 1.3 Production Compilation & Bundle Optimization
 Verify that Turbopack / Next.js production build succeeds and generates all 17 application routes.
@@ -63,7 +63,7 @@ Verify that Turbopack / Next.js production build succeeds and generates all 17 a
 npm run build
 ```
 - **Expected Result:** Output displays `✓ Compiled successfully`, pre-renders static and dynamic App Router routes, and exits `0`.
-- [ ] **Check 1.3:** Next.js production build exits 0.
+- [x] **Check 1.3:** Next.js production build exits 0.
 
 ### 1.4 Git Repository Hygiene & Secret Exclusion
 Verify that sensitive files (`.env`, `.env.production`) and legacy SQLite binary databases (`*.db`, `*.db-journal`) are strictly excluded from version control.
@@ -73,7 +73,7 @@ Verify that sensitive files (`.env`, `.env.production`) and legacy SQLite binary
 git status --ignored | grep -E '\.env$|\.env\.production$|dev\.db'
 ```
 - **Expected Result:** `.env`, `.env.production`, and `dev.db` appear exclusively under "Ignored files", never under "Untracked files" or "Changes to be committed".
-- [ ] **Check 1.4:** Git repository strictly ignores local secrets and binary databases.
+- [x] **Check 1.4:** Git repository strictly ignores local secrets and binary databases.
 
 ### 1.5 Dockerfile Non-Root Context & Layer Optimization
 Inspect `Dockerfile` to confirm security hardening standards.
@@ -83,7 +83,7 @@ Inspect `Dockerfile` to confirm security hardening standards.
 grep -n "USER node" Dockerfile
 ```
 - **Expected Result:** Line exists in the runner stage before `CMD ["npm", "start"]`.
-- [ ] **Check 1.5:** Dockerfile enforces non-root container user (`USER node`).
+- [x] **Check 1.5:** Dockerfile enforces non-root container user (`USER node`).
 
 ---
 
@@ -366,11 +366,11 @@ curl -s -I http://127.0.0.1:3000/login | grep "HTTP/1.1 200 OK"
 
 | Gate | Check Item | Verification Command | Criteria | Result | Auditor Sign-off |
 | :--- | :--- | :--- | :--- | :---: | :---: |
-| **G1.1** | TypeScript Compilation | `npx tsc --noEmit` | Clean exit 0, 0 errors | PENDING | |
-| **G1.2** | ESLint Code Quality | `npm run lint` | Clean exit 0, 0 errors | PENDING | |
-| **G1.3** | Production Build | `npm run build` | Route generation complete, exit 0 | PENDING | |
-| **G1.4** | Git Hygiene & Secrets | `git status --ignored` | No `.env` or `dev.db` tracked | PENDING | |
-| **G1.5** | Docker Non-Root | `grep "USER node" Dockerfile` | Non-root `node` user in runner | PENDING | |
+| **G1.1** | TypeScript Compilation | `npx tsc --noEmit` | Clean exit 0, 0 errors | **PASS** | Verified 2026-11-16 |
+| **G1.2** | ESLint Code Quality | `npm run lint` | Clean exit 0, 0 errors | **PASS** | Verified 2026-11-16 |
+| **G1.3** | Production Build | `npm run build` | Route generation complete, exit 0 | **PASS** | Verified 2026-11-16 |
+| **G1.4** | Git Hygiene & Secrets | `git status --ignored` | No `.env` or `dev.db` tracked | **PASS** | Verified 2026-11-16 |
+| **G1.5** | Docker Non-Root | `grep "USER node" Dockerfile` | Non-root `node` user in runner | **PASS** | Verified 2026-11-16 |
 | **G2.1** | OS Version Baseline | `lsb_release -a` | Ubuntu 24.04 LTS confirmed | PENDING | |
 | **G2.2** | UFW Perimeter Lock | `sudo ufw status verbose` | Only 22, 80, 443 open to WAN | PENDING | |
 | **G2.3** | File Permissions | `ls -l /opt/.../.env.production` | Mode `0600`, owned `root:root` | PENDING | |
